@@ -1,0 +1,7 @@
+{
+  "src": "/absolute/path/to/your-video.mp4",
+  "ranges": [[0, 12]],
+  "fix": {},
+  "drop": ["um", "uh"],
+  "names": []
+}

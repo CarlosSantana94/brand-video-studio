@@ -1,0 +1,20 @@
+{
+  "name": "Fieldnote",
+  "handle": "@fieldnote",
+  "url": "fieldnote.example",
+  "cta": "Watch the full story",
+  "logo": "assets/logo.svg",
+  "style": "pop-bounce",
+  "colors": {
+    "ink": "#123C3A",
+    "ink_dark": "#0A2221",
+    "bg": "#F2E6C9",
+    "light": "#FBF7EC",
+    "accent": "#F2A541",
+    "highlight": "#FFD27F"
+  },
+  "fonts": {
+    "display": { "family": "Shrikhand", "file": "Shrikhand-Regular.ttf" },
+    "body": { "family": "Fredoka", "file": "Fredoka.ttf", "weights": "300 700" }
+  }
+}

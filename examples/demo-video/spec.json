@@ -1,0 +1,11 @@
+{
+  "style": "pop-bounce",
+  "format": "9:16",
+  "hook": { "lines": ["The day we", "almost quit"], "pill": "a true story", "icon": "star" },
+  "cam": [{ "t": 5, "d": 0.5, "s": 1.2 }],
+  "layers": [
+    { "type": "pill", "t": 4.2, "d": 1.8, "text": "Day one" },
+    { "type": "stat", "t": 6, "d": 1.8, "big": "$102", "sub": "per person" },
+    { "type": "check", "t": 8, "d": 3, "title": "Worth it?", "items": [[8.3, "The view", "ok"], [9, "The queue", "no"]] }
+  ]
+}
