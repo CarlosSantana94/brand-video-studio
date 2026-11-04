@@ -11,6 +11,13 @@ Run `eyes index <render>.mp4`, read the contact sheets and check each point. Mos
 - **Captions clear the face during the hook.** Card layouts shrink the frame, so a caption can land on the face. Move the frame with a `cam` entry at `t: 0`, then return it when the hook ends.
 - **No burned-in text from the source** clashing with captions. Crop it with a punch-in or use another stretch.
 
+## Joined clips
+
+- **The order makes sense muted.** Each step follows from the one before.
+- **Cropped clips still show the action,** especially horizontal footage in a vertical video.
+- **Volume and color do not jump** between clips. Fix volume with `gain`, or tell the user about a clip that looks different.
+- **Clips with no speech hold the best stretch,** not the placeholder from `sequence.py`.
+
 ## Cover
 
 - **The first frame sells the video.** It works as the thumbnail, so the title must be visible from frame 0.

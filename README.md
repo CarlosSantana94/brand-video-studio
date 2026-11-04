@@ -18,6 +18,7 @@ You give it a video and a logo. Claude watches the footage, proposes the reels, 
 
 - **Builds a brand guide** from your logos, photos and references, or proposes one if you have none.
 - **Creates X reels from one long video:** finds the moments, writes the hooks, cuts on word boundaries and covers weak shots with b-roll.
+- **Works with many videos:** puts clips recorded in pieces in order, or plans a batch of reels across all your footage.
 - **Edits raw footage:** removes dead air and fillers, then adds jump zooms, captions, punch-ins and animated layers.
 - **Offers six animation styles,** plus a catalog of parts for making your own.
 - **Reviews its own work** by watching the render against a checklist of real failures.
@@ -51,6 +52,12 @@ Reenactment of a session. The names and results are made up.
 A 14-second take drops to 6.9 seconds once `autocut.py` removes dead air and fillers. Captions, a hook and a stat card go on top.
 
 ![A raw take beside its edited version, with a timeline where the silent parts collapse.](docs/before-after.gif)
+
+### Turn many clips into one video
+
+Recorded a recipe in ten pieces? Claude watches every clip, finds the retakes, and proposes an order based on what happens in them. Once you approve, it cuts the dead air, evens out the volume and adds the captions and step labels. It also plans batches, such as 20 reels from 15 videos, and can pick up where it stopped.
+
+![Ten clips of a recipe, out of order: Claude watches them, keeps the best of two takes, sorts them by recipe step and joins them into one video.](docs/many-clips.gif)
 
 ### Build a brand from a logo
 

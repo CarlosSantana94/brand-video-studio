@@ -1,5 +1,7 @@
 # X reels from one long video
 
+For more than one source video, plan the batch with `references/multiple-videos.md`, then use this guide for each reel.
+
 ## 1. Propose first
 
 After watching the video, propose the requested number of reels, or 7 to 10 if the user gave none. For each: title, type, source time ranges, why it should work. Wait for approval, since each render takes minutes.

@@ -22,6 +22,25 @@
 - **`drop`:** filler words hidden from captions. They stay in the audio.
 - **`names`:** capitalized words that should not start a new caption group.
 
+Several videos replace `src` with `sources`, and each range names its source:
+
+```json
+{
+  "sources": { "intro": "/absolute/path/intro.mp4", "oven": "/absolute/path/oven.mp4" },
+  "ranges": [[1.1, 3.2, "intro"], [0.8, 4.0, "oven"]],
+  "vranges": [[1.1, 3.2, "oven"], [0.8, 4.0, "oven"]],
+  "gain": { "oven": 3 },
+  "size": "1080x1920",
+  "fix": { "cost@oven:2.1": "coast" },
+  "add": [[2.0, 2.3, "really", "oven"]]
+}
+```
+
+- **`gain`:** decibels per source, to even out clips recorded at different volumes.
+- **`size`:** the picture size of the clip. By default, the size used the longest. Other clips are scaled and center-cropped to fill it, so a horizontal clip in a vertical video loses its sides.
+- **`fix` and `add`:** name the source when the word could be in more than one, as `word@id:second` and a fourth item.
+- Source ids match the files in `source/words/`, and a source with no sound stays silent. `make_video.py` takes that folder as `--words`.
+
 ## spec.json: how it looks
 
 All times are seconds in the assembled clip. The hook sits over the start of the clip, so speech continues under it.

@@ -1,6 +1,6 @@
 ---
 name: brand-video-studio
-description: Turn long videos into branded short-form reels, or edit raw footage for more attention, using HyperFrames for code-driven motion graphics and claude-eyes to watch the footage. Builds a brand guide from logos, photos and references when the user has none, and offers a catalog of animation styles. Use this whenever the user wants reels, Shorts, TikToks, clips from a podcast, vlog, webinar or interview, wants to cut or punch up a raw video, add animated captions, hooks or an outro, create a brand kit for video, or says things like "make N reels from this video", "edit this to keep people watching", or "make it look like my brand", even if they do not mention HyperFrames.
+description: Turn long videos into branded short-form reels, or edit raw footage for more attention, using HyperFrames for code-driven motion graphics and claude-eyes to watch the footage. Builds a brand guide from logos, photos and references when the user has none, and offers a catalog of animation styles. Use this whenever the user wants reels, Shorts, TikToks, clips from a podcast, vlog, webinar or interview, wants to cut or punch up a raw video, add animated captions, hooks or an outro, create a brand kit for video, or says things like "make N reels from this video", "make reels from these 15 videos", "put these clips in order", "join these clips into one video", "edit this to keep people watching", or "make it look like my brand", even if they do not mention HyperFrames.
 ---
 
 # Brand Video Studio
@@ -27,6 +27,7 @@ It needs Python 3, ffmpeg, Node (for `npx hyperframes`) and `eyes`. Installing `
 |---|---|
 | A brand, or has only a logo or references | Brand guide, below |
 | X reels from one long video | Brand guide if missing, then `references/reels-from-long-video.md` |
+| Several clips joined into one video, or reels from many videos | Brand guide if missing, then `references/multiple-videos.md` |
 | A raw video made more watchable | Brand guide if missing, then `references/edit-raw-video.md` |
 | To pick or compare a look | `references/animation-styles.md` |
 
@@ -35,7 +36,9 @@ Keep each client or channel in its own folder:
 ```
 <project>/
   brand/brand.json  BRAND.md  assets/
-  source/words.json
+  source/words.json          one long video
+  source/sources.json  words/<id>.json          several videos
+  plan.json                  a batch of videos
   videos/<NN-name>/cut.json  spec.json  ...
   renders/
   COPY.md
@@ -77,6 +80,8 @@ Read the `overview.md` that `eyes index` prints and view its contact sheets. Not
    ffmpeg -i in.mp4 -c:v copy -af loudnorm=I=-14:TP=-1.5:LRA=11 out.mp4
    ```
 5. Watch the render with `eyes index` and work through `references/review-checklist.md`. Fix and re-render. Do this for every video: a clean `check` says the file is valid, not that it is good.
+
+With several sources, pass `--words source/words`, the folder with one file per source.
 
 Render only after the user has seen the plan. Rendering is slow, and a wrong hook wastes it.
 

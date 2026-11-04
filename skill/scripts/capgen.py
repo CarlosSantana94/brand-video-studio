@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Generate compositions/captions.html, word by word, styled by the brand and animation preset.
-usage: capgen.py words.json cut.json out.html --brand brand.json --style STYLE --size WxH
+usage: capgen.py words cut.json out.html --brand brand.json --style STYLE --size WxH
 
-words.json: {"words": [{"start", "end", "text"}, ...]} in source seconds (`eyes transcript --words --json`).
+words:      {"words": [{"start", "end", "text"}, ...]} in source seconds (`eyes transcript --words --json`).
             whisper.cpp JSON ({"transcription": [{"text", "offsets": {"from", "to"}}]}) also works.
-cut.json:   "ranges": [[start, end], ...]   source seconds, joined in order
+            With several sources, a folder holding one <id>.json per source.
+cut.json:   "ranges": [[start, end], ...]   source seconds, joined in order; [start, end, "id"] with sources
             "t0": 0                         where speech starts in the clip
-            "fix": {"wrong": "right", "word@12.5": "only that one", "word@40.1": ""}   "" removes it
-            "add": [[start, end, "word"]]   words the transcriber missed
+            "fix": {"wrong": "right", "word@12.5": "only that one", "word@id:12.5": "in that source"}   "" removes it
+            "add": [[start, end, "word"]]   words the transcriber missed; add the id as a fourth item with sources
             "drop": ["um", "uh"]            filler words
             "names": ["Lisbon"]             capitalized words that must not open a new caption group
 """
@@ -16,30 +17,33 @@ import json
 import os
 import re
 
+from media import parts, words_by_source
+
 GROUP_WORDS = 4     # short groups are read at a glance on a phone
 GROUP_CHARS = 18
 PAUSE = 0.35
 
 
-def load_words(path):
-    data = json.load(open(path))
-    if "words" in data:
-        return [(w["start"], w["end"], w["text"]) for w in data["words"] if w["text"].strip()]
-    return [(w["offsets"]["from"] / 1000, w["offsets"]["to"] / 1000, w["text"])
-            for w in data["transcription"] if w["text"].strip()]
-
-
-def place_words(words, cut):
-    words = sorted(words + [(a, b, t) for a, b, t in cut.get("add", [])])
-    at = [(k.rsplit("@", 1)[0], float(k.rsplit("@", 1)[1]), v) for k, v in cut.get("fix", {}).items() if "@" in k]
+def place_words(by_source, cut):
+    extra = {}
+    for item in cut.get("add", []):
+        extra.setdefault(item[3] if len(item) > 3 else "", []).append(tuple(item[:3]))
+    at = []
+    for key, value in cut.get("fix", {}).items():
+        if "@" in key:
+            word, where = key.rsplit("@", 1)
+            sid, _, when = where.rpartition(":")
+            at.append((word, float(when), sid, value))
     fix, drop = cut.get("fix", {}), {d.lower() for d in cut.get("drop", [])}
     out, t = [], cut.get("t0", 0)
-    for ri, (a, b) in enumerate(cut["ranges"]):
-        for s, e, raw in words:
+    for ri, item in enumerate(cut["ranges"]):
+        a, b, sid = parts(item)
+        for s, e, raw in sorted(by_source.get(sid, []) + extra.get(sid, [])):
             if not a - 0.05 <= s < b - 0.12:
                 continue
             txt = raw.strip()
-            txt = next((v for k, when, v in at if k == txt and abs(when - s) < 0.3), fix.get(txt, txt))
+            txt = next((v for k, when, where, v in at if k == txt and abs(when - s) < 0.3 and where in ("", sid)),
+                       fix.get(txt, txt))
             if not re.search(r"\w", txt) or re.sub(r"\W", "", txt.lower()) in drop:
                 continue
             out.append([round(t + max(s, a) - a, 3), round(t + min(e, b) - a, 3), txt, ri])
@@ -78,7 +82,7 @@ def main():
     c = brand["colors"]
     W, H = a.size.split("x")
 
-    groups = group_words(place_words(load_words(a.words), cut), set(cut.get("names", [])))
+    groups = group_words(place_words(words_by_source(a.words, cut), cut), set(cut.get("names", [])))
     upper = cap["case"] == "upper"
     clean = lambda s: (s.upper() if upper else s).rstrip(",.")
     markup = []

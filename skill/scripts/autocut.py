@@ -11,6 +11,32 @@ import os
 import re
 
 
+def tighten(words, gap, pad):
+    """Join words into spoken stretches, dropping pauses longer than `gap`."""
+    ranges = [[words[0]["start"], words[0]["end"]]]
+    for w in words[1:]:
+        if w["start"] - ranges[-1][1] > gap:
+            ranges.append([w["start"], w["end"]])
+        else:
+            ranges[-1][1] = w["end"]
+    ranges = [[round(max(0, s - pad), 3), round(e + pad, 3)] for s, e in ranges]
+    for prev, cur in zip(ranges, ranges[1:]):   # padding must not make neighboring ranges overlap
+        cur[0] = max(cur[0], prev[1])
+    return ranges
+
+
+def jump_zooms(ranges, every, zoom):
+    """A zoom change right on a cut hides the jump; alternate so the frame keeps moving."""
+    cam, t, last, on = [], 0.0, 0.0, False
+    for item in ranges:
+        if every and t - last >= every:
+            on = not on
+            cam.append({"t": round(t, 3), "d": 0.01, "s": zoom if on else 1, "sfx": False})
+            last = t
+        t += item[1] - item[0]
+    return cam, t
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("video")
@@ -30,24 +56,8 @@ def main():
     if not words:
         raise SystemExit("no words to keep")
 
-    ranges = [[words[0]["start"], words[0]["end"]]]
-    for w in words[1:]:
-        if w["start"] - ranges[-1][1] > a.gap:
-            ranges.append([w["start"], w["end"]])
-        else:
-            ranges[-1][1] = w["end"]
-    ranges = [[round(max(0, s - a.pad), 3), round(e + a.pad, 3)] for s, e in ranges]
-    for prev, cur in zip(ranges, ranges[1:]):   # padding must not make neighboring ranges overlap
-        cur[0] = max(cur[0], prev[1])
-
-    # A zoom change right on a cut hides the jump; alternate so the frame keeps moving.
-    cam, t, last, on = [], 0.0, 0.0, False
-    for s, e in ranges:
-        if a.every and t - last >= a.every:
-            on = not on
-            cam.append({"t": round(t, 3), "d": 0.01, "s": a.zoom if on else 1, "sfx": False})
-            last = t
-        t += e - s
+    ranges = tighten(words, a.gap, a.pad)
+    cam, t = jump_zooms(ranges, a.every, a.zoom)
 
     os.makedirs(a.dir, exist_ok=True)
     json.dump({"src": os.path.abspath(a.video), "ranges": ranges, "fix": {}, "drop": sorted(fillers), "names": []},

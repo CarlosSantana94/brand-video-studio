@@ -44,7 +44,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("dir")
     ap.add_argument("--brand", required=True)
-    ap.add_argument("--words", help="word timings of the source video; required when the video has captions")
+    ap.add_argument("--words", help="word timings of the source, or a folder of <id>.json with several sources; required with captions")
     a = ap.parse_args()
 
     brand = json.load(open(a.brand))
