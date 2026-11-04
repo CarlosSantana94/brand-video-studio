@@ -8,6 +8,7 @@ Run `eyes index <render>.mp4`, read the contact sheets and check each point. Mos
 - **Each label sits on its shot.** A label naming a place appears over that place.
 - **No dark or ugly shots,** including close-ups of a chin or a blurred arm.
 - **Nothing covers a face.** If a card hides the speaker's eyes, delay it or put b-roll under it.
+- **Captions clear the face during the hook.** Card layouts shrink the frame, so a caption can land on the face. Move the frame with a `cam` entry at `t: 0`, then return it when the hook ends.
 - **No burned-in text from the source** clashing with captions. Crop it with a punch-in or use another stretch.
 
 ## Cover

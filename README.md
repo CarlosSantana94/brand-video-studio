@@ -32,6 +32,40 @@ It works in any language and outputs 9:16, 16:9 or 1:1.
 | `cinematic-minimal` | Full-bleed, long fades | Documentary, real estate, weddings |
 | `scrapbook` | Tilted, paper, warm | Family, DIY, recipes |
 
+![The same short video rendered in all six animation styles, side by side.](docs/styles.gif)
+
+## See it in action
+
+These demos use generated footage and a fictional brand. The styles and formats were rendered with the skill's own scripts; the other clips illustrate the process.
+
+### Start from a conversation
+
+Reenactment of a session. The names and results are made up.
+
+![A terminal conversation: the user asks for three reels, Claude proposes them, renders them and delivers the files with the copy.](docs/conversation.gif)
+
+### Edit raw footage
+
+A 14-second take drops to 6.9 seconds once `autocut.py` removes dead air and fillers. Captions, a hook and a stat card go on top.
+
+![A raw take beside its edited version, with a timeline where the silent parts collapse.](docs/before-after.gif)
+
+### Build a brand from a logo
+
+`extract_palette.py` reads the colors from your files. You or Claude then assign their roles in `brand.json`, and every video follows it.
+
+![Colors are extracted from a logo, become a brand.json and appear in a finished video.](docs/logo-to-brand.gif)
+
+### Review every render
+
+Claude watches the finished video and fixes what it finds. This example shows a title that falls outside the cover crop.
+
+![A title outside the cover crop is found, moved down and passes after a new render.](docs/self-review.gif)
+
+### Export for every platform
+
+![The same video in 9:16, 1:1 and 16:9.](docs/formats.gif)
+
 ## How it works
 
 1. [claude-eyes](https://github.com/moritzkremb/claude-eyes) gives Claude evidence of what is in the video: shots, on-screen text and word timings.
