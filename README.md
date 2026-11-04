@@ -4,6 +4,8 @@ A skill for [Claude Code](https://claude.com/claude-code) that turns long videos
 
 You give it a video and a logo. Claude watches the footage, proposes the reels, builds them as code and reviews each render before handing it over.
 
+![How Brand Video Studio works: brand files become a brand.json, Claude watches the video and picks moments, builds reels in different styles, and reviews every render.](docs/how-it-works.gif)
+
 ```text
 > Make 8 reels from podcast.mp4 for my coffee brand. The logo is in ./brand.
 > Tighten this raw tutorial and add captions. Keep it horizontal.
