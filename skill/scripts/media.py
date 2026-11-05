@@ -3,6 +3,11 @@ import json
 import os
 import re
 import subprocess
+import sys
+
+# Windows pipes default to a legacy code page, which garbles accents and fails on emoji.
+for stream in (sys.stdout, sys.stderr):
+    stream.reconfigure(encoding="utf-8", errors="replace")
 
 
 def probe(path):
@@ -32,7 +37,7 @@ def probe(path):
 def loudness(path):
     """Mean volume in dB, or None when the file has no measurable sound."""
     done = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", path, "-vn", "-af", "volumedetect", "-f", "null", "-"],
-                          capture_output=True, text=True)
+                          capture_output=True, text=True, encoding="utf-8", errors="replace")
     found = re.search(r"mean_volume: (-?[\d.]+) dB", done.stderr)
     return float(found.group(1)) if found else None
 
@@ -51,7 +56,7 @@ def source_paths(cut):
 
 def load_words(path):
     """Word timings as (start, end, text). Reads the eyes format and whisper.cpp JSON."""
-    data = json.load(open(path))
+    data = json.load(open(path, encoding="utf-8"))
     if "words" in data:
         return [(w["start"], w["end"], w["text"]) for w in data["words"] if w["text"].strip()]
     return [(w["offsets"]["from"] / 1000, w["offsets"]["to"] / 1000, w["text"])

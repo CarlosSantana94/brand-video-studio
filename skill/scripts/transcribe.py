@@ -14,7 +14,8 @@ import tempfile
 
 
 def find_eyes():
-    return shutil.which("eyes") or next((p for p in [os.path.expanduser("~/.local/bin/eyes")] if os.path.exists(p)), None)
+    return shutil.which("eyes") or next((p for p in map(os.path.expanduser, ["~/.local/bin/eyes", "~/.local/bin/eyes.exe"])
+                                         if os.path.exists(p)), None)
 
 
 def with_eyes(video, lang, glossary):
@@ -26,7 +27,8 @@ def with_eyes(video, lang, glossary):
         cmd += ["--glossary", glossary]
     if subprocess.run(cmd, stdout=subprocess.DEVNULL).returncode:
         return []
-    done = subprocess.run([eyes, "transcript", video, "--words", "--json"], capture_output=True, text=True)
+    done = subprocess.run([eyes, "transcript", video, "--words", "--json"], capture_output=True, text=True,
+                          encoding="utf-8", env={**os.environ, "PYTHONUTF8": "1"})
     return json.loads(done.stdout).get("words", []) if done.returncode == 0 else []
 
 
@@ -39,7 +41,7 @@ def with_whisper(video, lang):
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", video, "-ac", "1", "-ar", "16000", wav], check=True)
         subprocess.run(["whisper-cli", "-m", model, "-l", lang, "-mc", "0", "-ml", "1", "-sow", "-ojf", "-of",
                         os.path.join(tmp, "out"), "-f", wav], check=True, stdout=subprocess.DEVNULL)
-        data = json.load(open(os.path.join(tmp, "out.json")))
+        data = json.load(open(os.path.join(tmp, "out.json"), encoding="utf-8"))
     return [{"start": w["offsets"]["from"] / 1000, "end": w["offsets"]["to"] / 1000, "text": w["text"].strip()}
             for w in data["transcription"] if w["text"].strip()]
 
@@ -54,7 +56,7 @@ def main():
     words = with_eyes(a.video, a.lang, a.glossary) or with_whisper(a.video, a.lang)
     if not words:
         sys.exit("No words found. Run `eyes setup`, or set WHISPER_MODEL and install whisper-cli.")
-    json.dump({"words": words}, open(a.out, "w"), ensure_ascii=False)
+    json.dump({"words": words}, open(a.out, "w", encoding="utf-8"), ensure_ascii=False)
     print(len(words), "words ->", a.out)
 
 

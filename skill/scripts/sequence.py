@@ -31,7 +31,7 @@ def main():
     ap.add_argument("--format", default="9:16")
     a = ap.parse_args()
 
-    clips = {c["id"]: c for c in json.load(open(a.manifest))["sources"]}
+    clips = {c["id"]: c for c in json.load(open(a.manifest, encoding="utf-8"))["sources"]}
     order = a.order.split(",") if a.order else list(clips)
     unknown = [sid for sid in order if sid not in clips]
     if unknown:
@@ -45,7 +45,7 @@ def main():
     ranges, t, spoken = [], 0.0, 0
     for sid in order:
         clip, file = clips[sid], os.path.join(words_dir, sid + ".json")
-        words = json.load(open(file))["words"] if os.path.exists(file) else []
+        words = json.load(open(file, encoding="utf-8"))["words"] if os.path.exists(file) else []
         words = [w for w in words if plain(w["text"]) not in fillers]
         if words:
             kept = tighten(words, a.gap, a.pad)
@@ -71,9 +71,9 @@ def main():
            "fix": {}, "drop": sorted(fillers), "names": []}
     if gain:
         cut["gain"] = gain
-    json.dump(cut, open(os.path.join(a.dir, "cut.json"), "w"), indent=1, ensure_ascii=False)
+    json.dump(cut, open(os.path.join(a.dir, "cut.json"), "w", encoding="utf-8"), indent=1, ensure_ascii=False)
     json.dump({"format": a.format, "captions": spoken > 0, "closing": False, "cam": cam, "layers": [], "sfx": []},
-              open(os.path.join(a.dir, "spec.json"), "w"), indent=1)
+              open(os.path.join(a.dir, "spec.json"), "w", encoding="utf-8"), indent=1)
     print(f"{len(order)} clips, {t:.1f}s, {len(cam)} jump zooms, gain {gain or 'none'}")
 
 

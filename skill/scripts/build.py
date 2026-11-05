@@ -44,10 +44,10 @@ args = ap.parse_args()
 
 D = args.dir
 HERE = os.path.dirname(os.path.abspath(__file__))
-spec = json.load(open(os.path.join(D, "spec.json")))
-brand = json.load(open(args.brand))
+spec = json.load(open(os.path.join(D, "spec.json"), encoding="utf-8"))
+brand = json.load(open(args.brand, encoding="utf-8"))
 STYLE_NAME = spec.get("style", brand.get("style", "pop-bounce"))
-S = json.load(open(os.path.join(HERE, "..", "assets", "styles.json")))[STYLE_NAME]
+S = json.load(open(os.path.join(HERE, "..", "assets", "styles.json"), encoding="utf-8"))[STYLE_NAME]
 C = brand["colors"]
 W, H = FORMATS[spec.get("format", "9:16")]
 VERTICAL = H > W
@@ -381,8 +381,8 @@ index = f"""<!doctype html>
 """
 comps = os.path.join(D, "compositions")
 os.makedirs(comps, exist_ok=True)
-open(os.path.join(D, "index.html"), "w").write(index)
+open(os.path.join(D, "index.html"), "w", encoding="utf-8").write(index)
 for name, content in {"background": background, "hook": hook_html, "info": info, "closing": closing_html}.items():
     if content:
-        open(os.path.join(comps, name + ".html"), "w").write(content)
+        open(os.path.join(comps, name + ".html"), "w", encoding="utf-8").write(content)
 print(f"{STYLE_NAME} {W}x{H}  clip {clip}s  closing at {CI}s  total {TOTAL}s  sfx {len(sfx)}")

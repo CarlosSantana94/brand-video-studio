@@ -84,7 +84,7 @@ Claude watches the finished video and fixes what it finds. This example shows a 
 
 ## Install
 
-You need [Claude Code](https://claude.com/claude-code), Python 3, Node.js, ffmpeg and claude-eyes.
+You need [Claude Code](https://claude.com/claude-code), Python 3, Node.js 22 or newer, ffmpeg and claude-eyes.
 
 ```bash
 git clone https://github.com/CarlosSantana94/brand-video-studio.git
@@ -102,6 +102,35 @@ eyes setup --fix
 ```
 
 The `hyperframes` and `eyes` skills are recommended too, since they add detail about both tools.
+
+### Windows
+
+Tested on Windows 11. In PowerShell, install the tools first, then open a new terminal so it picks up the new `PATH`:
+
+```powershell
+winget install Python.Python.3.12
+winget install OpenJS.NodeJS.22
+winget install Gyan.FFmpeg
+winget install astral-sh.uv
+```
+
+Then install the skill and claude-eyes:
+
+```powershell
+git clone https://github.com/CarlosSantana94/brand-video-studio.git
+cd brand-video-studio
+powershell -ExecutionPolicy Bypass -File install.ps1
+uv tool install git+https://github.com/moritzkremb/claude-eyes
+eyes setup --fix
+eyes install-skill
+```
+
+`install.ps1` links the skill with a junction, which needs neither admin rights nor Developer Mode. `./install.sh` does the same from Git Bash.
+
+Two things differ from macOS and Linux:
+
+- **whisper.cpp is a manual step.** `eyes setup --fix` cannot install it on Windows, and without it videos get no local transcript. Download `whisper-bin-x64.zip` from the [whisper.cpp releases](https://github.com/ggml-org/whisper.cpp/releases) (not every release includes it, so take the newest that does), unzip it, add that folder to your `PATH`, then run `eyes setup --download-model large-v3-turbo-q5_0`. The model is about 570 MB.
+- **Use `python`, not `python3`.** On Windows `python3` is usually a Microsoft Store stub. The skill knows this, but you will need it for running a script by hand.
 
 ## Use it
 

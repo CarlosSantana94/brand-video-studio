@@ -17,9 +17,11 @@ Run this once per machine and fix what it reports:
 python3 <skill>/scripts/doctor.py
 ```
 
-It needs Python 3, ffmpeg, Node (for `npx hyperframes`) and `eyes`. Installing `eyes` is covered in the `eyes` skill, or `uv tool install git+https://github.com/moritzkremb/claude-eyes` then `eyes setup --fix`. Load the `hyperframes` and `eyes` skills if they are available: their rules on composition format and video evidence apply here too.
+It needs Python 3, ffmpeg, Node 22 or newer (for `npx hyperframes`) and `eyes`. Installing `eyes` is covered in the `eyes` skill, or `uv tool install git+https://github.com/moritzkremb/claude-eyes` then `eyes setup --fix`. Load the `hyperframes` and `eyes` skills if they are available: their rules on composition format and video evidence apply here too.
 
 `<skill>` is this skill's directory.
+
+On Windows, `python3` is usually a Microsoft Store stub that runs nothing: use `python` or `py -3` wherever these instructions say `python3`. `eyes setup --fix` does not install whisper.cpp there; the README covers it.
 
 ## Choose the job
 

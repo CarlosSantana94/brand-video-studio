@@ -47,8 +47,8 @@ def main():
     ap.add_argument("--words", help="word timings of the source, or a folder of <id>.json with several sources; required with captions")
     a = ap.parse_args()
 
-    brand = json.load(open(a.brand))
-    spec = json.load(open(os.path.join(a.dir, "spec.json")))
+    brand = json.load(open(a.brand, encoding="utf-8"))
+    spec = json.load(open(os.path.join(a.dir, "spec.json"), encoding="utf-8"))
     copy_assets(a.dir, brand, os.path.dirname(os.path.abspath(a.brand)))
     run(os.path.join(HERE, "mkclip.py"), os.path.join(a.dir, "cut.json"), a.dir)
     if spec.get("captions", True):

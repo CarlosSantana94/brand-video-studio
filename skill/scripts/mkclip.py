@@ -13,7 +13,7 @@ import json, subprocess, sys, os
 from collections import Counter
 from media import parts, probe, source_paths
 
-cut = json.load(open(sys.argv[1])); out = sys.argv[2]
+cut = json.load(open(sys.argv[1], encoding="utf-8")); out = sys.argv[2]
 os.makedirs(os.path.join(out, "assets"), exist_ok=True)
 PATHS = source_paths(cut)
 MULTI = bool(cut.get("sources"))

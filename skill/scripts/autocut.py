@@ -52,7 +52,7 @@ def main():
 
     fillers = {f.strip().lower() for f in a.fillers.split(",") if f.strip()}
     plain = lambda s: re.sub(r"\W", "", s.lower())
-    words = [w for w in json.load(open(a.words))["words"] if plain(w["text"]) not in fillers]
+    words = [w for w in json.load(open(a.words, encoding="utf-8"))["words"] if plain(w["text"]) not in fillers]
     if not words:
         raise SystemExit("no words to keep")
 
@@ -61,9 +61,9 @@ def main():
 
     os.makedirs(a.dir, exist_ok=True)
     json.dump({"src": os.path.abspath(a.video), "ranges": ranges, "fix": {}, "drop": sorted(fillers), "names": []},
-              open(os.path.join(a.dir, "cut.json"), "w"), indent=1, ensure_ascii=False)
+              open(os.path.join(a.dir, "cut.json"), "w", encoding="utf-8"), indent=1, ensure_ascii=False)
     json.dump({"format": a.format, "closing": False, "cam": cam, "layers": [], "sfx": []},
-              open(os.path.join(a.dir, "spec.json"), "w"), indent=1)
+              open(os.path.join(a.dir, "spec.json"), "w", encoding="utf-8"), indent=1)
     total = words[-1]["end"] - words[0]["start"]
     print(f"{len(ranges)} ranges, {t:.1f}s kept of {total:.1f}s spoken span, {len(cam)} jump zooms")
 
