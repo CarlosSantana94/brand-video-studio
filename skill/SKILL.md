@@ -76,8 +76,9 @@ Read the `overview.md` that `eyes index` prints and view its contact sheets. Not
    cd videos/NN-name
    npx --yes hyperframes check --json
    npx --yes hyperframes snapshot --at 0.3,8
-   npx --yes hyperframes render -q delivery -o ../../renders/NN-name.mp4 --quiet
-   ffmpeg -i in.mp4 -c:v copy -af loudnorm=I=-14:TP=-1.5:LRA=11 out.mp4
+   npx --yes hyperframes render -q delivery -o ../../renders/NN-name-raw.mp4 --quiet
+   ffmpeg -i ../../renders/NN-name-raw.mp4 -c:v libx264 -crf 19 -preset slow -af loudnorm=I=-14:TP=-1.5:LRA=11 -movflags +faststart ../../renders/NN-name.mp4
+   rm ../../renders/NN-name-raw.mp4
    ```
 5. Watch the render with `eyes index` and work through `references/review-checklist.md`. Fix and re-render. Do this for every video: a clean `check` says the file is valid, not that it is good.
 

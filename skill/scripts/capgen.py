@@ -73,12 +73,16 @@ def main():
     ap.add_argument("--brand", required=True)
     ap.add_argument("--style", required=True)
     ap.add_argument("--size", default="1080x1920")
+    ap.add_argument("--caption", default="{}", help='JSON overrides, such as {"mode": "box", "case": "upper", "scale": 1.2}')
     a = ap.parse_args()
 
     here = os.path.dirname(os.path.abspath(__file__))
     cut = json.load(open(a.cut))
     brand = json.load(open(a.brand))
     cap = json.load(open(os.path.join(here, "..", "assets", "styles.json")))[a.style]["caption"]
+    override = json.loads(a.caption)
+    scale = override.pop("scale", 1)
+    cap = {**cap, **override, "size": round(cap["size"] * scale)}
     c = brand["colors"]
     W, H = a.size.split("x")
 

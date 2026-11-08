@@ -274,9 +274,9 @@ if closing:
         js.append(enter("#logo", 0.42))
     js.append(f'tl.fromTo("#root .ch", {{ y: 40, opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.3, ease: "{S["enter"]["ease"]}", stagger: 0.03 }}, 0.75);')
     if cta:
-        js.append(enter("#cta", 1.5))
+        js.append(enter("#cta", 1.2))
     if handle:
-        js.append(enter("#handlep", 1.9))
+        js.append(enter("#handlep", 1.4))
     closing_html = scene("closing", f"""        #root #ground {{ position: absolute; inset: 0; background: {C['bg']}; }}
         #root #stack {{ position: absolute; left: 60px; right: 60px; top: {int(H * 0.27)}px; text-align: center; }}
         #root #logo {{ width: 300px; height: 300px; object-fit: contain; margin-bottom: 40px; }}

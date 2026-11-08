@@ -118,6 +118,18 @@ my-brand/
 
 See [`examples/`](examples/) for a sample brand and video spec.
 
+## The visual app
+
+Prefer screens to a chat? The repo includes a local app. Import your brand kit, point it at your videos and answer a few questions, with a live preview beside you. Claude Code does the editing on your computer, and you approve the plan and the first video.
+
+![Choosing a brand repaints the app in its colors, and the preview phone takes the brand's look.](docs/app-theme.gif)
+
+```bash
+python3 app/server.py
+```
+
+See [the app's README](app/README.md) for what it does, how it works and what it costs.
+
 ## Make it yours
 
 - **Brand sounds:** set `sfx_dir` in `brand.json`. Files named like the built-in effects replace them.

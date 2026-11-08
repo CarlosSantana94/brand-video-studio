@@ -75,6 +75,7 @@ All times are seconds in the assembled clip. The hook sits over the start of the
 - **`hook`:** omit it for no hook. `pill`, `icon` and `size` are optional. Icons: `star`, `bolt`, `heart`, `pin`, `camera`, `money`, `check`, `play`.
 - **`closing`:** default `true`. With `false` the video ends on the last clip frame.
 - **`captions`:** set `false` for b-roll.
+- **`caption`:** optional changes to the style's captions: `mode` (`color`, `box`, `none`), `case` (`upper` or `none`) and `scale`, such as `{ "mode": "box", "scale": 1.2 }`.
 - **`voice`:** set `false` to mute the clip, as when `music` replaces it. Copy the music file into `assets/`.
 - **`cam`:** moves of the video frame: `s` scale, `x`, `y`, `d` duration, optional `ease`. `t: 0` sets the opening framing. Add `"sfx": false` to skip its swish.
 - **`layers`:** each has start `t`, duration `d` and optional `top` in pixels. Items in `check` and `list` carry their own appear time, timed to the moment they are said. A card enters just before its first row, because an empty card looks broken.

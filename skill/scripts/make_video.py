@@ -57,7 +57,7 @@ def main():
         style = spec.get("style", brand.get("style", "pop-bounce"))
         html = os.path.join(a.dir, "compositions", "captions.html")
         run(os.path.join(HERE, "capgen.py"), a.words, os.path.join(a.dir, "cut.json"), html, "--brand", a.brand,
-            "--style", style, "--size", FORMATS[spec.get("format", "9:16")])
+            "--style", style, "--size", FORMATS[spec.get("format", "9:16")], "--caption", json.dumps(spec.get("caption", {})))
         measured = os.path.join(a.dir, "compositions", "clip_words.json")
         if os.path.exists(measured):
             run(os.path.join(HERE, "retime.py"), html, measured)

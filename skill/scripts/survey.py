@@ -10,6 +10,7 @@ import difflib
 import json
 import os
 import re
+import subprocess
 import unicodedata
 
 from media import load_words, loudness, probe
@@ -39,6 +40,19 @@ def slug(name, taken):
     return sid
 
 
+QUIET = -45   # dB; speech this quiet is almost always a transcription hallucination
+
+
+def contact_sheet(path, duration, out):
+    """Eight frames across the clip in one small image, so every clip can be looked at, not only read."""
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    if not os.path.exists(out):
+        rate = 8 / max(duration, 0.5)
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", path, "-vf", f"fps={rate},scale=240:-2,tile=4x2",
+                        "-frames:v", "1", "-q:v", "4", out], check=False)
+    return out if os.path.exists(out) else None
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("paths", nargs="+")
@@ -66,8 +80,12 @@ def main():
             if words:
                 json.dump({"words": words}, open(file, "w"), ensure_ascii=False)
         said = load_words(file) if os.path.exists(file) else []
+        if said and clip["mean_db"] is not None and clip["mean_db"] < QUIET:
+            os.remove(file)   # whisper invents lines like "thanks for watching" over near silence
+            said, clip["note"] = [], "near silence: transcript discarded, probably b-roll"
         clip["words"] = len(said)
         clip["text"] = " ".join(w[2].strip() for w in said)
+        clip["sheet"] = contact_sheet(path, clip["duration"], os.path.join(a.out, "sheets", sid + ".jpg"))
         clips.append(clip)
     clips.sort(key=lambda c: (c["created"].startswith("file:"), c["created"], c["id"]))
     json.dump({"sources": clips}, open(os.path.join(a.out, "sources.json"), "w"), indent=1, ensure_ascii=False)
@@ -81,9 +99,11 @@ def main():
     if len(shapes) > 1:
         print("flag: horizontal and vertical clips are mixed; some will lose their sides when cropped")
     for c in clips:
+        if c.get("note"):
+            print(f'flag: {c["id"]}: {c["note"]}')
         if not c["audio"]:
             print(f'flag: {c["id"]} has no sound')
-        elif not c["words"] and not a.no_transcribe:
+        elif not c["words"] and not a.no_transcribe and not c.get("note"):
             print(f'flag: {c["id"]} has sound but no words; check whether it is music, ambience or a failed transcript')
     levels = [c["mean_db"] for c in clips if c["words"] and c["mean_db"] is not None]
     if levels and max(levels) - min(levels) > 6:
