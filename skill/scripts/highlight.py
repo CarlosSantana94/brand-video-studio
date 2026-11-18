@@ -27,7 +27,7 @@ def motion(video):
     cmd = ["ffmpeg", "-v", "error", "-i", video, "-an", "-vf",
            "fps=10,scale=160:-2,format=gray,tblend=all_mode=difference,signalstats,metadata=print:key=lavfi.signalstats.YAVG:file=-",
            "-f", "null", "-"]
-    out = subprocess.run(cmd, capture_output=True, text=True).stdout
+    out = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
     pts = [float(x) for x in re.findall(r"pts_time:([\d.]+)", out)]
     val = [float(x) for x in re.findall(r"YAVG=([\d.]+)", out)]
     return list(zip(pts, val))
@@ -38,7 +38,7 @@ def loudness(video):
     cmd = ["ffmpeg", "-v", "error", "-i", video, "-vn", "-af",
            "aresample=48000,asetnsamples=4800,astats=metadata=1:reset=1,ametadata=print:key=lavfi.astats.Overall.RMS_level:file=-",
            "-f", "null", "-"]
-    out = subprocess.run(cmd, capture_output=True, text=True).stdout
+    out = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
     pts = [float(x) for x in re.findall(r"pts_time:([\d.]+)", out)]
     val = [float(x) if x not in ("-inf", "inf", "nan") else -90.0 for x in re.findall(r"RMS_level=(\S+)", out)]
     return list(zip(pts, val))
@@ -109,14 +109,14 @@ def main():
         result["windows"] = [{"start": 0, "end": round(hi, 2), "peak": 0, "score": 0}]
 
     if a.words:
-        words = json.load(open(a.words)).get("words", [])
+        words = json.load(open(a.words, encoding="utf-8")).get("words", [])
         rate = len(words) / dur if dur else 0
         result["speech"] = {"words": len(words), "per_second": round(rate, 2),
                             "captionable": len(words) >= 8 and rate >= 0.5}
 
     result["curve"] = [[round(k * STEP, 1), s] for k, s in enumerate(score)]
     if a.json:
-        json.dump(result, open(a.json, "w"), indent=1)
+        json.dump(result, open(a.json, "w", encoding="utf-8"), indent=1)
     print(f"{result['duration']}s")
     for w in result["windows"]:
         print(f"  {w['start']:>7.2f}-{w['end']:<7.2f} peak {w['peak']:.1f}s  score {w['score']}")

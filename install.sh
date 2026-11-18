@@ -2,6 +2,9 @@
 # Link this skill into Claude Code so it is available in every project.
 set -e
 ROOT=$(cd "$(dirname "$0")" && pwd)
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) exec powershell -NoProfile -ExecutionPolicy Bypass -File "$(cygpath -w "$ROOT/install.ps1")" ;;
+esac
 TARGET="${CLAUDE_HOME:-$HOME/.claude}/skills"
 LINK="$TARGET/brand-video-studio"
 mkdir -p "$TARGET"

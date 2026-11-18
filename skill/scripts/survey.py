@@ -78,7 +78,7 @@ def main():
         if not os.path.exists(file) and clip["audio"] and not a.no_transcribe:
             words = with_eyes(path, a.lang, a.glossary) or with_whisper(path, a.lang)
             if words:
-                json.dump({"words": words}, open(file, "w"), ensure_ascii=False)
+                json.dump({"words": words}, open(file, "w", encoding="utf-8"), ensure_ascii=False)
         said = load_words(file) if os.path.exists(file) else []
         if said and clip["mean_db"] is not None and clip["mean_db"] < QUIET:
             os.remove(file)   # whisper invents lines like "thanks for watching" over near silence
@@ -88,7 +88,7 @@ def main():
         clip["sheet"] = contact_sheet(path, clip["duration"], os.path.join(a.out, "sheets", sid + ".jpg"))
         clips.append(clip)
     clips.sort(key=lambda c: (c["created"].startswith("file:"), c["created"], c["id"]))
-    json.dump({"sources": clips}, open(os.path.join(a.out, "sources.json"), "w"), indent=1, ensure_ascii=False)
+    json.dump({"sources": clips}, open(os.path.join(a.out, "sources.json"), "w", encoding="utf-8"), indent=1, ensure_ascii=False)
 
     for c in clips:
         print(f'{c["id"]:<24} {c["duration"]:>7.1f}s {c["width"]}x{c["height"]} {c["fps"]:g}fps '

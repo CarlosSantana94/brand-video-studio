@@ -33,7 +33,7 @@ def used_ranges(root, name):
     file = os.path.join(root, "videos", name, "cut.json")
     if not os.path.exists(file):
         return []
-    cut = json.load(open(file))
+    cut = json.load(open(file, encoding="utf-8"))
     paths = source_paths(cut)
     found = []
     for item in cut["ranges"]:
@@ -44,7 +44,7 @@ def used_ranges(root, name):
 
 def main():
     root = sys.argv[1]
-    plan = json.load(open(os.path.join(root, "plan.json")))
+    plan = json.load(open(os.path.join(root, "plan.json"), encoding="utf-8"))
     videos = plan["videos"]
     counts, per_source = {}, {}
     for item in videos:
@@ -64,7 +64,7 @@ def main():
             print(f"flag: {n} videos use {sid}, over the limit of {limit}")
     manifest = os.path.join(root, "source", "sources.json")
     if os.path.exists(manifest):
-        for clip in json.load(open(manifest))["sources"]:
+        for clip in json.load(open(manifest, encoding="utf-8"))["sources"]:
             if clip["id"] not in per_source:
                 print(f'flag: {clip["id"]} is not used by any video')
     used = {n: used_ranges(root, n) for n in names}

@@ -90,7 +90,8 @@ also needs everything `doctor.py` checks: Python 3, ffmpeg, Node and `eyes`.
 
 ### Windows
 
-- Install Python 3, ffmpeg (`winget install Gyan.FFmpeg`), Node LTS, `eyes` and Claude Code, then run
+- Install Python 3, ffmpeg (`winget install Gyan.FFmpeg`), Node 22 or newer, `eyes` and Claude Code. Link the
+  skill with `powershell -ExecutionPolicy Bypass -File install.ps1` from the repo, then run
   `python <skill>\scripts\doctor.py`.
 - In OneDrive, right-click the capture folder and choose **Always keep on this device**. Otherwise clips
   stay as cloud placeholders until something reads them.

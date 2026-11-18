@@ -77,9 +77,9 @@ def main():
     a = ap.parse_args()
 
     here = os.path.dirname(os.path.abspath(__file__))
-    cut = json.load(open(a.cut))
-    brand = json.load(open(a.brand))
-    cap = json.load(open(os.path.join(here, "..", "assets", "styles.json")))[a.style]["caption"]
+    cut = json.load(open(a.cut, encoding="utf-8"))
+    brand = json.load(open(a.brand, encoding="utf-8"))
+    cap = json.load(open(os.path.join(here, "..", "assets", "styles.json"), encoding="utf-8"))[a.style]["caption"]
     override = json.loads(a.caption)
     scale = override.pop("scale", 1)
     cap = {**cap, **override, "size": round(cap["size"] * scale)}
@@ -96,7 +96,7 @@ def main():
     data = [{"id": f"cg{gi}", "w": [[w[0], w[1]] for w in g]} for gi, g in enumerate(groups)]
 
     shadow = f'{cap["shadow"]}px {cap["shadow"] + 1}px 0 {c["ink_dark"]}' if cap["shadow"] else "none"
-    html = open(os.path.join(here, "..", "assets", "captions.tpl.html")).read()
+    html = open(os.path.join(here, "..", "assets", "captions.tpl.html"), encoding="utf-8").read()
     for key, value in {
         "__FONT_FILE__": os.path.basename(brand["fonts"]["body"]["file"]),
         "__FONT__": brand["fonts"]["body"]["family"], "__SIZE__": cap["size"], "__STROKE__": cap["stroke"],
@@ -105,7 +105,7 @@ def main():
         "__MARKUP__": "\n".join(markup), "__DATA__": json.dumps(data),
     }.items():
         html = html.replace(key, str(value))
-    open(a.out, "w").write(html)
+    open(a.out, "w", encoding="utf-8").write(html)
     print(len(groups), "groups;", " / ".join(" ".join(clean(w[2]) for w in g) for g in groups[:12]))
 
 
