@@ -80,6 +80,7 @@ All times are seconds in the assembled clip. The hook sits over the start of the
 - **`voice`:** set `false` to mute the clip, as when `music` replaces it. Copy the music file into `assets/`.
 - **`cam`:** moves of the video frame: `s` scale, `x`, `y`, `d` duration, optional `ease`. `t: 0` sets the opening framing. Add `"sfx": false` to skip its swish.
 - **`layers`:** each has start `t`, duration `d` and optional `top` in pixels. Items in `check` and `list` carry their own appear time, timed to the moment they are said. A card enters just before its first row, because an empty card looks broken.
+- **`scenes`:** three.js scenes as `{"t", "d", "src", "mode", "params"}`. `src` is `neon-grid`, `particles`, `model` or a `.js` file of your own; `mode` is `full` or `overlay`. See `3d-scenes.md`.
 - **`sfx`:** extra effects as `[time, name, volume]`. Effects for layers, hook and closing are added automatically.
 
 Run `make_video.py` again after any change: it regenerates every composition, so edit `spec.json` and not the HTML. For a one-off effect that the spec cannot express, edit the HTML as the last step and say so, because the next build overwrites it.

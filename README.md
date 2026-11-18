@@ -142,6 +142,16 @@ python3 skill/scripts/watcher.py --config watcher.json
 
 See [`skill/references/auto-clips.md`](skill/references/auto-clips.md) for the content rules, creator permissions and starting it with Windows.
 
+## 3D scenes
+
+Add a three.js intro, backdrop, particle overlay or a hero 3D model to any video with `scenes` in `spec.json`. Three ready-made scenes take the brand's colors: `neon-grid`, `particles` and `model`. Write your own as a small ES module. Install the [three.js skills](https://github.com/cloudai-x/threejs-skills) so Claude writes current three.js r186 code:
+
+```bash
+npx skills add cloudai-x/threejs-skills
+```
+
+See [`skill/references/3d-scenes.md`](skill/references/3d-scenes.md). For jobs this skill leaves to others, such as beat-synced montages, see [`skill/references/companion-skills.md`](skill/references/companion-skills.md).
+
 ## Make it yours
 
 - **Brand sounds:** set `sfx_dir` in `brand.json`. Files named like the built-in effects replace them.

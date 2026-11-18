@@ -17,7 +17,7 @@ Run this once per machine and fix what it reports:
 python3 <skill>/scripts/doctor.py
 ```
 
-It needs Python 3, ffmpeg, Node (for `npx hyperframes`) and `eyes`. Installing `eyes` is covered in the `eyes` skill, or `uv tool install git+https://github.com/moritzkremb/claude-eyes` then `eyes setup --fix`. Load the `hyperframes` and `eyes` skills if they are available: their rules on composition format and video evidence apply here too.
+It needs Python 3, ffmpeg, Node (for `npx hyperframes`) and `eyes`. Installing `eyes` is covered in the `eyes` skill, or `uv tool install git+https://github.com/moritzkremb/claude-eyes` then `eyes setup --fix`. For 3D scenes, also install the three.js skills with `npx skills add cloudai-x/threejs-skills`. Load the `hyperframes` and `eyes` skills if they are available: their rules on composition format and video evidence apply here too.
 
 `<skill>` is this skill's directory.
 
@@ -31,6 +31,8 @@ It needs Python 3, ffmpeg, Node (for `npx hyperframes`) and `eyes`. Installing `
 | A raw video made more watchable | Brand guide if missing, then `references/edit-raw-video.md` |
 | Gameplay, sports, b-roll or any clip where nobody talks | Brand guide if missing, then `references/clips-without-voice.md` |
 | New clips in a folder edited automatically (console captures, OneDrive, Dropbox) | `references/auto-clips.md` |
+| A 3D intro, backdrop, particles, transition or hero object | `references/3d-scenes.md`, with the threejs-skills |
+| Something this skill does not do (beat-synced montages, more styles, recaps) | `references/companion-skills.md` |
 | To pick or compare a look | `references/animation-styles.md` |
 
 Keep each client or channel in its own folder:
