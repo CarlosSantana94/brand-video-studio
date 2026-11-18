@@ -34,6 +34,7 @@ It works in any language and outputs 9:16, 16:9 or 1:1.
 | `tech-glitch` | Grid, stepped motion | Software, AI, gaming |
 | `cinematic-minimal` | Full-bleed, long fades | Documentary, real estate, weddings |
 | `scrapbook` | Tilted, paper, warm | Family, DIY, recipes |
+| `gaming` | Huge centered hook, high contrast | Gameplay clips, highlights |
 
 ![The same short video rendered in all six animation styles, side by side.](docs/styles.gif)
 
@@ -146,6 +147,39 @@ my-brand/
 ```
 
 See [`examples/`](examples/) for a sample brand and video spec.
+
+## The visual app
+
+Prefer screens to a chat? The repo includes a local app. Import your brand kit, point it at your videos and answer a few questions, with a live preview beside you. Claude Code does the editing on your computer, and you approve the plan and the first video.
+
+![Choosing a brand repaints the app in its colors, and the preview phone takes the brand's look.](docs/app-theme.gif)
+
+```bash
+python3 app/server.py
+```
+
+See [the app's README](app/README.md) for what it does, how it works and what it costs.
+
+## Edit new clips automatically
+
+Point the watcher at a folder, such as console captures synced by OneDrive, and every new clip is edited by Claude Code in headless mode: the best moment picked by watching it (no voice needed), a 9:16 render, and captions for X, Instagram and TikTok. Everything waits in `review/` for you. Nothing is published.
+
+```bash
+cp skill/assets/watcher.example.json watcher.json    # set watch, out, brand and lang
+python3 skill/scripts/watcher.py --config watcher.json
+```
+
+See [`skill/references/auto-clips.md`](skill/references/auto-clips.md) for the content rules, creator permissions and starting it with Windows.
+
+## 3D scenes
+
+Add a three.js intro, backdrop, particle overlay or a hero 3D model to any video with `scenes` in `spec.json`. Three ready-made scenes take the brand's colors: `neon-grid`, `particles` and `model`. Write your own as a small ES module. Install the [three.js skills](https://github.com/cloudai-x/threejs-skills) so Claude writes current three.js r186 code:
+
+```bash
+npx skills add cloudai-x/threejs-skills
+```
+
+See [`skill/references/3d-scenes.md`](skill/references/3d-scenes.md). For jobs this skill leaves to others, such as beat-synced montages, see [`skill/references/companion-skills.md`](skill/references/companion-skills.md).
 
 ## Make it yours
 

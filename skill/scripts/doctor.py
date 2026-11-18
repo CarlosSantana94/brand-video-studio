@@ -43,6 +43,9 @@ def main():
         done = subprocess.run([shutil.which("npx"), "--yes", "hyperframes", "--version"], capture_output=True, text=True,
                               encoding="utf-8", errors="replace")
         print("ok   hyperframes", done.stdout.strip() if done.returncode == 0 else "(could not run; check your network)")
+    skills = [os.path.join(os.path.expanduser(os.environ.get("CLAUDE_HOME", "~/.claude")), "skills"), os.path.join(".claude", "skills")]
+    three = any(os.path.isdir(os.path.join(d, "threejs-fundamentals")) for d in skills)
+    print(("ok  " if three else "skip") + " threejs-skills" + ("" if three else "  -> optional, for 3D scenes: npx skills add cloudai-x/threejs-skills"))
     sys.exit(1 if missing else 0)
 
 

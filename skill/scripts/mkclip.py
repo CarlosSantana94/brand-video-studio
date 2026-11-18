@@ -8,7 +8,9 @@ Optional "vranges": other ranges for the picture (same total duration as "ranges
 shots or burned-in text with b-roll while the audio of "ranges" keeps playing.
 Optional "gain": {"id": dB}, to even out clips recorded at different volumes.
 With several sources, each picture is scaled and center-cropped to fill the most used size, or
-"size": "1080x1920". Sources with no sound stay silent."""
+"size": "1080x1920". Sources with no sound stay silent.
+"size" also works with one video. Add "fit": "blur" to show the whole picture over a blurred copy of
+itself instead of cropping it, as for wide gameplay in a vertical video."""
 import json, subprocess, sys, os
 from collections import Counter
 from media import parts, probe, source_paths
@@ -31,20 +33,28 @@ for a, b, sid in R + VR:
         sys.exit(f"range {a}-{b} of {sid or PATHS[sid]} ends after the video, which lasts {INFO[sid]['duration']}s")
 
 fit = ""
-if MULTI:
+BLUR = cut.get("fit") == "blur"
+if MULTI or cut.get("size") or BLUR:
     seconds = Counter()
     for a, b, sid in VR:
         seconds[f'{INFO[sid]["width"]}x{INFO[sid]["height"]}'] += b - a
-    size = cut.get("size") or seconds.most_common(1)[0][0]
+    size = cut.get("size") or ("1080x1920" if BLUR else seconds.most_common(1)[0][0])
     W, H = (int(n) // 2 * 2 for n in size.split("x"))
     fit = f",scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1"
-    for sid in used:
+    for sid in used if not BLUR else []:
         if abs(INFO[sid]["width"] / INFO[sid]["height"] - W / H) > 0.02:
             print(f"note: {sid} is {INFO[sid]['width']}x{INFO[sid]['height']} and gets cropped to fill {W}x{H}; check its framing")
 
 f, t = [], 0.0
 for i, (a, b, sid) in enumerate(VR):
-    f.append(f"[{INPUT[sid]}:v]trim={a}:{b},setpts=PTS-STARTPTS,fps=30{fit}[v{i}];")
+    if BLUR:
+        f.append(f"[{INPUT[sid]}:v]trim={a}:{b},setpts=PTS-STARTPTS,fps=30,split[bg{i}][fg{i}];"
+                 f"[bg{i}]scale={W // 4}:{H // 4}:force_original_aspect_ratio=increase,crop={W // 4}:{H // 4},boxblur=12:2,"
+                 f"eq=brightness=-0.08,scale={W}:{H}[bb{i}];"
+                 f"[fg{i}]scale={W}:{H}:force_original_aspect_ratio=decrease,setsar=1[ff{i}];"
+                 f"[bb{i}][ff{i}]overlay=(W-w)/2:(H-h)/2,setsar=1[v{i}];")
+    else:
+        f.append(f"[{INPUT[sid]}:v]trim={a}:{b},setpts=PTS-STARTPTS,fps=30{fit}[v{i}];")
 for i, (a, b, sid) in enumerate(R):
     d = b - a
     gain = cut.get("gain", {}).get(sid, 0)

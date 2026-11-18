@@ -17,7 +17,7 @@ Run this once per machine and fix what it reports:
 python3 <skill>/scripts/doctor.py
 ```
 
-It needs Python 3, ffmpeg, Node 22 or newer (for `npx hyperframes`) and `eyes`. Installing `eyes` is covered in the `eyes` skill, or `uv tool install git+https://github.com/moritzkremb/claude-eyes` then `eyes setup --fix`. Load the `hyperframes` and `eyes` skills if they are available: their rules on composition format and video evidence apply here too.
+It needs Python 3, ffmpeg, Node 22 or newer (for `npx hyperframes`) and `eyes`. Installing `eyes` is covered in the `eyes` skill, or `uv tool install git+https://github.com/moritzkremb/claude-eyes` then `eyes setup --fix`. For 3D scenes, also install the three.js skills with `npx skills add cloudai-x/threejs-skills`. Load the `hyperframes` and `eyes` skills if they are available: their rules on composition format and video evidence apply here too.
 
 `<skill>` is this skill's directory.
 
@@ -31,6 +31,10 @@ On Windows, `python3` is usually a Microsoft Store stub that runs nothing: use `
 | X reels from one long video | Brand guide if missing, then `references/reels-from-long-video.md` |
 | Several clips joined into one video, or reels from many videos | Brand guide if missing, then `references/multiple-videos.md` |
 | A raw video made more watchable | Brand guide if missing, then `references/edit-raw-video.md` |
+| Gameplay, sports, b-roll or any clip where nobody talks | Brand guide if missing, then `references/clips-without-voice.md` |
+| New clips in a folder edited automatically (console captures, OneDrive, Dropbox) | `references/auto-clips.md` |
+| A 3D intro, backdrop, particles, transition or hero object | `references/3d-scenes.md`, with the threejs-skills |
+| Something this skill does not do (beat-synced montages, more styles, recaps) | `references/companion-skills.md` |
 | To pick or compare a look | `references/animation-styles.md` |
 
 Keep each client or channel in its own folder:
@@ -52,7 +56,7 @@ Reuse a `brand.json` if the project has one. Otherwise read `references/brand-gu
 
 ## Watch before you decide
 
-Never plan from the transcript alone. A strong line over a dark shot is a weak reel, and a quiet stretch may hold the best footage.
+Never plan from the transcript alone. When the transcript is empty or is not the creator talking, do not use `autocut.py` or word-timed captions: pick the moment visually with `highlight.py` and `eyes`, as `references/clips-without-voice.md` explains. A strong line over a dark shot is a weak reel, and a quiet stretch may hold the best footage.
 
 ```bash
 python3 <skill>/scripts/transcribe.py source.mp4 source/words.json --lang en --glossary "Names, Terms"
@@ -78,8 +82,9 @@ Read the `overview.md` that `eyes index` prints and view its contact sheets. Not
    cd videos/NN-name
    npx --yes hyperframes check --json
    npx --yes hyperframes snapshot --at 0.3,8
-   npx --yes hyperframes render -q delivery -o ../../renders/NN-name.mp4 --quiet
-   ffmpeg -i in.mp4 -c:v copy -af loudnorm=I=-14:TP=-1.5:LRA=11 out.mp4
+   npx --yes hyperframes render -q delivery -o ../../renders/NN-name-raw.mp4 --quiet
+   ffmpeg -i ../../renders/NN-name-raw.mp4 -c:v libx264 -crf 19 -preset slow -af loudnorm=I=-14:TP=-1.5:LRA=11 -movflags +faststart ../../renders/NN-name.mp4
+   rm ../../renders/NN-name-raw.mp4
    ```
 5. Watch the render with `eyes index` and work through `references/review-checklist.md`. Fix and re-render. Do this for every video: a clean `check` says the file is valid, not that it is good.
 

@@ -37,7 +37,8 @@ Several videos replace `src` with `sources`, and each range names its source:
 ```
 
 - **`gain`:** decibels per source, to even out clips recorded at different volumes.
-- **`size`:** the picture size of the clip. By default, the size used the longest. Other clips are scaled and center-cropped to fill it, so a horizontal clip in a vertical video loses its sides.
+- **`fit`:** `"blur"` shows the whole picture over a blurred copy of itself instead of cropping, for wide footage in a vertical video. Works with one video or several; `size` defaults to `1080x1920`.
+- **`size`:** the picture size of the clip. Also works with a single `src`. By default, the size used the longest. Other clips are scaled and center-cropped to fill it, so a horizontal clip in a vertical video loses its sides.
 - **`fix` and `add`:** name the source when the word could be in more than one, as `word@id:second` and a fourth item.
 - Source ids match the files in `source/words/`, and a source with no sound stays silent. `make_video.py` takes that folder as `--words`.
 
@@ -75,9 +76,11 @@ All times are seconds in the assembled clip. The hook sits over the start of the
 - **`hook`:** omit it for no hook. `pill`, `icon` and `size` are optional. Icons: `star`, `bolt`, `heart`, `pin`, `camera`, `money`, `check`, `play`.
 - **`closing`:** default `true`. With `false` the video ends on the last clip frame.
 - **`captions`:** set `false` for b-roll.
+- **`caption`:** optional changes to the style's captions: `mode` (`color`, `box`, `none`), `case` (`upper` or `none`) and `scale`, such as `{ "mode": "box", "scale": 1.2 }`.
 - **`voice`:** set `false` to mute the clip, as when `music` replaces it. Copy the music file into `assets/`.
 - **`cam`:** moves of the video frame: `s` scale, `x`, `y`, `d` duration, optional `ease`. `t: 0` sets the opening framing. Add `"sfx": false` to skip its swish.
 - **`layers`:** each has start `t`, duration `d` and optional `top` in pixels. Items in `check` and `list` carry their own appear time, timed to the moment they are said. A card enters just before its first row, because an empty card looks broken.
+- **`scenes`:** three.js scenes as `{"t", "d", "src", "mode", "params"}`. `src` is `neon-grid`, `particles`, `model` or a `.js` file of your own; `mode` is `full` or `overlay`. See `3d-scenes.md`.
 - **`sfx`:** extra effects as `[time, name, volume]`. Effects for layers, hook and closing are added automatically.
 
 Run `make_video.py` again after any change: it regenerates every composition, so edit `spec.json` and not the HTML. For a one-off effect that the spec cannot express, edit the HTML as the last step and say so, because the next build overwrites it.

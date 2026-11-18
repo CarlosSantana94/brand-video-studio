@@ -14,9 +14,11 @@ spec.json (only "layers" and friends you need; see references/spec.md):
   captions: true                   false for b-roll
   voice: true                      false mutes the clip
   music: {"src": "assets/music.mp3", "vol": 0.9, "dur": 30}
+  scenes: [{"t": 0, "d": 3, "src": "neon-grid", "mode": "full", "params": {}}]   three.js scenes, see references/3d-scenes.md
 """
 import argparse
 import html
+import shutil
 import json
 import os
 import subprocess
@@ -145,8 +147,8 @@ background = scene("background", f'        #root .d {{ position: absolute; }}\n 
 # ---------------------------------------------------------------- hook
 hook_html = None
 if hook:
-    size = hook.get("size", 116 if VERTICAL else 104)
-    top = HOOK_TOP if VERTICAL else 150
+    size = hook.get("size", S.get("hook_size", 116) if VERTICAL else 104)
+    top = S.get("hook_top", HOOK_TOP) if VERTICAL else 150
     pill_top = top + int(size * 1.02 * len(hook["lines"])) + 34
     title = S["title"]
     # The opening frame is the cover, so the title may not start invisible or oversized.
@@ -159,8 +161,11 @@ if hook:
     full = not CARD
     shadow = f"7px 7px 0 {C['accent']}" if HARD or S["shadow"] == "hard" else "none"
     title_color = "#FFFFFF" if full else C["ink"]
+    # "full" darkens the whole frame, for a title in the middle of busy footage such as gameplay.
+    scrim = (f"{C['ink_dark']}99" if S.get("scrim") == "full"
+             else f"linear-gradient({C['ink_dark']}cc, {C['ink_dark']}00 62%)")
     stroke = f"-webkit-text-stroke: 10px {C['ink_dark']}; paint-order: stroke fill;" if full else ""
-    styles = f"""        #root #scrim {{ position: absolute; inset: 0; background: linear-gradient({C['ink_dark']}cc, {C['ink_dark']}00 62%); opacity: {1 if full else 0}; }}
+    styles = f"""        #root #scrim {{ position: absolute; inset: 0; background: {scrim}; opacity: {1 if full else 0}; }}
         #root #tilt {{ position: absolute; left: 70px; right: 70px; top: {top}px; transform: rotate({title['tilt']}deg); }}
         #root #title {{ text-align: center; }}
         #root .hl {{ font-family: {DISPLAY}; font-size: {size}px; line-height: 1.02; color: {title_color}; {stroke} text-shadow: {shadow}; white-space: nowrap; }}
@@ -262,8 +267,16 @@ info = scene("info", f"""        #root .lay {{ position: absolute; left: 0; righ
              "\n".join("        " + m for m in mk), "\n".join("        " + j for j in js))
 
 # ---------------------------------------------------------------- closing
+def luminance(hex_color):
+    r, g, b = (int(hex_color.lstrip("#")[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
 closing_html = None
 if closing:
+    # Brands with a dark background (neon, gaming, night) need light text on the closing card.
+    DARK_BG = luminance(C["bg"]) < 0.35
+    NAME_C, CTA_C = (C["highlight"], C["light"]) if DARK_BG else (C["ink"], C["ink_dark"])
     logo = brand.get("logo")
     logo_tag = f'<img id="logo" src="assets/img/{os.path.basename(logo)}" alt="" />' if logo else ""
     letters = "".join(f'<span class="ch">{esc(c) if c != " " else "&nbsp;"}</span>' for c in brand.get("url") or brand["name"])
@@ -274,20 +287,88 @@ if closing:
         js.append(enter("#logo", 0.42))
     js.append(f'tl.fromTo("#root .ch", {{ y: 40, opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.3, ease: "{S["enter"]["ease"]}", stagger: 0.03 }}, 0.75);')
     if cta:
-        js.append(enter("#cta", 1.5))
+        js.append(enter("#cta", 1.2))
     if handle:
-        js.append(enter("#handlep", 1.9))
+        js.append(enter("#handlep", 1.4))
     closing_html = scene("closing", f"""        #root #ground {{ position: absolute; inset: 0; background: {C['bg']}; }}
         #root #stack {{ position: absolute; left: 60px; right: 60px; top: {int(H * 0.27)}px; text-align: center; }}
         #root #logo {{ width: 300px; height: 300px; object-fit: contain; margin-bottom: 40px; }}
-        #root #name {{ font-family: {DISPLAY}; font-size: 96px; line-height: 1.1; color: {C['ink']}; white-space: nowrap; }}
+        #root #name {{ font-family: {DISPLAY}; font-size: 96px; line-height: 1.1; color: {NAME_C}; white-space: nowrap; }}
         #root .ch {{ display: inline-block; }}
-        #root #cta {{ margin-top: 30px; font-family: {BODY}; font-weight: 600; font-size: 52px; color: {C['ink_dark']}; }}
+        #root #cta {{ margin-top: 30px; font-family: {BODY}; font-weight: 600; font-size: 52px; color: {CTA_C}; }}
         #root #handle {{ margin-top: 44px; }}
         #root #handlep {{ display: inline-block; padding: 14px 40px; border-radius: 999px; background: {C['ink']}; color: {C['light']};
           font-family: {BODY}; font-weight: 700; font-size: 54px; }}""",
                          f'        <div id="ground"><div id="stack">{logo_tag}<div id="name">{letters}</div>{cta}{handle}</div></div>',
                          "\n".join("        " + j for j in js))
+
+# ---------------------------------------------------------------- 3D scenes
+THREE_VERSION = "0.186.0"
+THREE_CDN = f"https://cdn.jsdelivr.net/npm/three@{THREE_VERSION}"
+scene_hosts, scene_files = [], {}
+for i, sc in enumerate(spec.get("scenes", [])):
+    sid, src = f"scene3d-{i}", sc["src"].replace("\\", "/")     # a browser import needs forward slashes
+    if not src.endswith(".js"):     # a ready-made scene from the skill
+        builtin = os.path.join(HERE, "..", "assets", "scenes3d", src + ".js")
+        if not os.path.exists(builtin):
+            raise SystemExit(f"unknown scene {src!r}: use a file name ending in .js or one of "
+                             + ", ".join(sorted(f[:-3] for f in os.listdir(os.path.dirname(builtin)))))
+        os.makedirs(os.path.join(D, "assets", "scenes"), exist_ok=True)
+        shutil.copy(builtin, os.path.join(D, "assets", "scenes", src + ".js"))
+        src = f"assets/scenes/{src}.js"
+    elif not os.path.exists(os.path.join(D, src)):
+        raise SystemExit(f"scene file not found: {os.path.join(D, src)}")
+    dur = round(sc["d"], 3)
+    opts = {"width": W, "height": H, "duration": dur, "colors": C, "params": sc.get("params", {}),
+            "transparent": sc.get("mode", "full") == "overlay"}
+    scene_files[sid] = f"""<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <style>
+        #root {{ position: absolute; inset: 0; pointer-events: none; }}
+        #root canvas {{ position: absolute; inset: 0; width: 100%; height: 100%; }}
+      </style>
+      <div id="root" data-composition-id="{sid}" data-width="{W}" data-height="{H}" data-duration="{dur}">
+        <canvas id="{sid}-canvas" width="{W}" height="{H}" data-layout-allow-overflow></canvas>
+      </div>
+      <script type="module">
+        // The scene is a pure function of time: HyperFrames seeks frames out of order, so the GSAP tween
+        // below is the only clock. No requestAnimationFrame, no Timer, no Math.random().
+        import * as THREE from "three";
+        import setup from "./{src}";
+        window.__hf = window.__hf || {{}};
+        window.__hf.buildReady = window.__hf.buildReady || {{}};
+        const ready = (async () => {{
+          const canvas = document.getElementById("{sid}-canvas");
+          const render = await setup({{ THREE, canvas, ...{json.dumps(opts)} }});
+          const clock = {{ t: 0 }};
+          const tl = gsap.timeline({{ paused: true }});
+          tl.to(clock, {{ t: {dur}, duration: {dur}, ease: "none", onUpdate: () => render(clock.t) }}, 0);
+          render(0);
+          window.__timelines["{sid}"] = tl;
+        }})();
+        window.__hf.buildReady["{sid}"] = ready;
+      </script>
+    </template>
+  </body>
+</html>
+"""
+    z = 3     # above the footage, under the hook, layers and captions
+    scene_hosts.append(
+        f'      <div id="{sid}" data-composition-id="{sid}" data-composition-src="compositions/{sid}.html" class="clip" '
+        f'data-start="{sc["t"]}" data-duration="{dur}" data-track-index="{20 + i}" data-track-kind="graphics" '
+        f'data-width="{W}" data-height="{H}" style="z-index: {z}"></div>')
+    sfx_name = sc.get("sfx", "whoosh")
+    if sfx_name:
+        spec.setdefault("sfx", []).append([sc["t"], sfx_name, 0.4])
+IMPORTMAP = ""
+if scene_hosts:
+    IMPORTMAP = ('    <script type="importmap">' + json.dumps({"imports": {"three": f"{THREE_CDN}/build/three.module.js",
+                 "three/addons/": f"{THREE_CDN}/examples/jsm/"}}) + "</script>\n")
 
 # ---------------------------------------------------------------- index
 sfx = [(round(t, 3), f, v) for t, f, v in sfx]
@@ -346,7 +427,7 @@ index = f"""<!doctype html>
 <html>
   <head>
     <meta charset="UTF-8" />
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+{IMPORTMAP}    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <style>
       body {{ margin: 0; }}
       #cam-shadow {{ position: absolute; left: {CARD_SIDE + 22}px; top: {CARD_TOP + 22}px; width: {W - 2 * CARD_SIDE}px; height: {H - CARD_TOP - CARD_BOTTOM}px; border-radius: {S['radius']}px; background: {C['accent']}; z-index: 1; }}
@@ -365,6 +446,7 @@ index = f"""<!doctype html>
           <video id="main-video" class="clip" src="assets/clip.mp4" data-start="0" data-duration="{clip}" data-track-index="1" playsinline {'data-has-audio="true"' if spec.get("voice", True) else "muted"}></video>
         </div>
       </div>
+{chr(10).join(scene_hosts)}
 {host("hook", 0, HE, 3, "graphics", 4) if hook else ""}
 {host("info", 0, CI, 4, "graphics", 5)}
 {caps_host}
@@ -382,7 +464,8 @@ index = f"""<!doctype html>
 comps = os.path.join(D, "compositions")
 os.makedirs(comps, exist_ok=True)
 open(os.path.join(D, "index.html"), "w", encoding="utf-8").write(index)
-for name, content in {"background": background, "hook": hook_html, "info": info, "closing": closing_html}.items():
+for name, content in {"background": background, "hook": hook_html, "info": info, "closing": closing_html, **scene_files}.items():
     if content:
         open(os.path.join(comps, name + ".html"), "w", encoding="utf-8").write(content)
-print(f"{STYLE_NAME} {W}x{H}  clip {clip}s  closing at {CI}s  total {TOTAL}s  sfx {len(sfx)}")
+print(f"{STYLE_NAME} {W}x{H}  clip {clip}s  closing at {CI}s  total {TOTAL}s  sfx {len(sfx)}"
+      + (f"  3d scenes {len(scene_hosts)}" if scene_hosts else ""))
