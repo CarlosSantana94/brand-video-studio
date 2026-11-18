@@ -24,8 +24,11 @@ import batch  # noqa: E402
 VIDEO = (".mp4", ".mov", ".m4v", ".mkv", ".webm", ".avi")
 AUDIO = (".mp3", ".wav", ".m4a", ".aac", ".flac", ".aiff", ".ogg")
 IMAGE = (".png", ".jpg", ".jpeg", ".svg", ".webp")
-TOOLS = ["Read", "Write", "Edit", "Glob", "Grep", "Skill", "Bash(python3:*)", "Bash(npx:*)", "Bash(ffmpeg:*)",
-         "Bash(ffprobe:*)", "Bash(eyes:*)", "Bash(cd:*)", "Bash(ls:*)", "Bash(mkdir:*)", "Bash(cp:*)", "Bash(mv:*)"]
+TOOLS = ["Read", "Write", "Edit", "Glob", "Grep", "Skill", "Bash(python3:*)", "Bash(python:*)", "Bash(py:*)", "Bash(npx:*)",
+         "Bash(ffmpeg:*)", "Bash(ffprobe:*)", "Bash(eyes:*)", "Bash(cd:*)", "Bash(ls:*)", "Bash(mkdir:*)", "Bash(cp:*)", "Bash(mv:*)"]
+DENIED = ["Monitor", "ScheduleWakeup", "CronCreate"]
+WINDOWS = os.name == "nt"
+TEXT = {"text": True, "encoding": "utf-8", "errors": "replace"}     # Windows pipes default to a legacy code page
 LIMIT_WORDS = ("usage limit", "rate limit", "limit reached", "hit your limit", "out of extra usage")
 lock = threading.RLock()
 
@@ -52,14 +55,14 @@ def safe_name(name):
 
 def read_json(path, default=None):
     try:
-        return json.loads(Path(path).read_text())
+        return json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return default
 
 
 def write_json(path, data):
     temp = Path(str(path) + ".tmp")
-    temp.write_text(json.dumps(data, indent=1, ensure_ascii=False))
+    temp.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
     temp.replace(path)
 
 
@@ -82,7 +85,7 @@ def list_brands():
 
 def read_notes(d):
     file = d / "BRAND.md"
-    return file.read_text().split("## Voice\n", 1)[-1].strip() if file.exists() else ""
+    return file.read_text(encoding="utf-8").split("## Voice\n", 1)[-1].strip() if file.exists() else ""
 
 
 def get_brand(bid):
@@ -117,8 +120,8 @@ def save_brand(data, bid=None):
             raise ValueError("Claude is still reading this brand kit")
         write_json(d / "brand.json", brand)
         md = d / "BRAND.md"
-        head = md.read_text().split("## Voice\n", 1)[0] if md.exists() else f'# {brand["name"]}\n\n'
-        md.write_text(f'{head}## Voice\n{data.get("notes", "").strip()}\n')
+        head = md.read_text(encoding="utf-8").split("## Voice\n", 1)[0] if md.exists() else f'# {brand["name"]}\n\n'
+        md.write_text(f'{head}## Voice\n{data.get("notes", "").strip()}\n', encoding="utf-8")
         return get_brand(bid)
 
 
@@ -172,11 +175,11 @@ def run_import(bid, src):
     d = brands_dir() / bid
     skills = d / ".claude" / "skills"
     skills.mkdir(parents=True, exist_ok=True)
-    (skills / "brand-video-studio").symlink_to(SKILL)
-    cmd = [claude_path(), "-p", prompts.import_brand(str(src)), "--output-format", "json", "--permission-mode", "acceptEdits",
-           "--allowedTools", *TOOLS, "--add-dir", str(src)]
+    link_dir(skills / "brand-video-studio", SKILL)
+    cmd = claude_command(d, ["--output-format", "json", "--add-dir", str(src)])
     try:
-        done = subprocess.run(cmd, cwd=d, env=clean_env(), capture_output=True, text=True, timeout=1800)
+        done = subprocess.run(cmd, input=prompts.import_brand(str(src)), cwd=d, env=clean_env(), capture_output=True,
+                              timeout=1800, **TEXT)
         result = json.loads(done.stdout or "{}")
         failed = done.returncode or result.get("is_error")
         message = str(result.get("result") or done.stdout[-300:])
@@ -282,7 +285,7 @@ def create_project(data):
         d = projects_dir() / pid
         (d / "footage").mkdir(parents=True)
         (d / ".claude" / "skills").mkdir(parents=True)
-        (d / ".claude" / "skills" / "brand-video-studio").symlink_to(SKILL)
+        link_dir(d / ".claude" / "skills" / "brand-video-studio", SKILL)
         if brand.get("importing"):
             raise ValueError("Claude is still reading this brand kit")
         shutil.copytree(brands_dir() / brand["id"], d / "brand", ignore=shutil.ignore_patterns(".claude"))
@@ -305,9 +308,31 @@ def link_folder(target, folder):
     """Use videos where they are: raw footage is too big to copy for every project."""
     count = 0
     for file in folder_files(folder, VIDEO):
-        (target / safe_name(file.name)).symlink_to(file)
+        link_file(target / safe_name(file.name), file)
         count += 1
     return count
+
+
+def link_file(link, file):
+    """A symlink, or on Windows without Developer Mode a hard link (same drive), or a copy as the last resort."""
+    try:
+        link.symlink_to(file)
+    except OSError:
+        try:
+            os.link(file, link)
+        except OSError:
+            shutil.copy2(file, link)
+
+
+def link_dir(link, folder):
+    """Windows needs admin rights or Developer Mode for a symlink; a junction needs neither."""
+    try:
+        link.symlink_to(folder, target_is_directory=True)
+    except OSError:
+        if not WINDOWS:
+            raise
+        import _winapi
+        _winapi.CreateJunction(str(folder), str(link))
 
 
 def folder_files(folder, kinds):
@@ -326,7 +351,11 @@ def describe_folder(folder, kind):
 
 def pick_folder():
     """The browser cannot hand over a folder path, so the computer's own dialog does."""
-    if shutil.which("osascript"):
+    if WINDOWS:
+        script = ("Add-Type -AssemblyName System.Windows.Forms; $d = New-Object System.Windows.Forms.FolderBrowserDialog; "
+                  "if ($d.ShowDialog() -eq 'OK') { $d.SelectedPath }")
+        done = subprocess.run(["powershell", "-NoProfile", "-STA", "-Command", script], capture_output=True, **TEXT)
+    elif shutil.which("osascript"):
         done = subprocess.run(["osascript", "-e", 'POSIX path of (choose folder)'], capture_output=True, text=True)
     elif shutil.which("zenity"):
         done = subprocess.run(["zenity", "--file-selection", "--directory"], capture_output=True, text=True)
@@ -367,7 +396,7 @@ def activity(pid, after=0):
     file = project_dir(pid) / "activity.jsonl"
     if not file.exists():
         return []
-    lines = file.read_text().splitlines()[after:]
+    lines = file.read_text(encoding="utf-8").splitlines()[after:]
     return [json.loads(x) for x in lines]
 
 
@@ -376,7 +405,7 @@ def log(pid, kind, text):
     last = activity(pid)[-1:]
     if last and last[0]["kind"] == kind and last[0]["text"] == text[:600]:
         return
-    with open(file, "a") as out:
+    with open(file, "a", encoding="utf-8") as out:
         out.write(json.dumps({"t": time.time(), "kind": kind, "text": text[:600]}, ensure_ascii=False) + "\n")
 
 
@@ -387,13 +416,48 @@ def detail(pid):
     copy = d / "COPY.md"
     return {**load(pid), "footage": footage, "sources": [{k: s.get(k) for k in ("id", "duration", "words")} for s in sources],
             "proposal": read_json(d / "proposal.json"), "videos": videos_state(pid),
-            "copy": copy.read_text() if copy.exists() else "", "queued": jobs.position(pid), "active": jobs.active == pid}
+            "copy": copy.read_text(encoding="utf-8") if copy.exists() else "", "queued": jobs.position(pid), "active": jobs.active == pid}
 
 
 # Claude Code
 
 def claude_path():
     return os.environ.get("BVS_CLAUDE") or shutil.which("claude")
+
+
+def claude_command(cwd, extra):
+    """claude -p with the prompt on stdin and the tool rules in a settings file. On Windows, claude.cmd runs its
+    arguments through cmd.exe, which cuts long lines and treats the ( ) * & | of prompts and "Bash(python3:*)" as syntax."""
+    settings = Path(cwd) / ".claude" / "bvs-settings.json"
+    settings.parent.mkdir(parents=True, exist_ok=True)
+    settings.write_text(json.dumps({"permissions": {"allow": TOOLS, "deny": DENIED}}, indent=1), encoding="utf-8")
+    binary = claude_path()
+    head = [sys.executable, binary] if binary.lower().endswith(".py") else [binary]
+    return head + ["-p", "--permission-mode", "acceptEdits", "--settings", str(settings), *extra]
+
+
+def spawn(cmd, cwd, env, prompt=None):
+    """Start a job in its own process group (POSIX) or process group (Windows), so stop() can end its children too."""
+    flags = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW if WINDOWS else 0
+    proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdin=subprocess.PIPE if prompt is not None else subprocess.DEVNULL,
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=not WINDOWS,
+                            creationflags=flags, **TEXT)
+    if prompt is not None:
+        def feed():     # in a thread: a prompt larger than the pipe buffer must not block reading the output
+            try:
+                proc.stdin.write(prompt)
+                proc.stdin.close()
+            except OSError:
+                pass
+        threading.Thread(target=feed, daemon=True).start()
+    return proc
+
+
+def kill_tree(proc):
+    if WINDOWS:
+        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
+    else:
+        os.killpg(proc.pid, signal.SIGTERM)
 
 
 def tool_line(block):
@@ -407,7 +471,7 @@ def tool_line(block):
 
 def clean_env():
     """Started from inside Claude Code, the app must not hand that session's settings to its own jobs."""
-    env = {**os.environ, "PATH": f'{Path("~/.local/bin").expanduser()}:{os.environ.get("PATH", "")}'}
+    env = {**os.environ, "PATH": f'{Path("~/.local/bin").expanduser()}{os.pathsep}{os.environ.get("PATH", "")}'}
     if "CLAUDECODE" in env:
         for key in list(env):
             if key.startswith(("CLAUDE_CODE_", "CLAUDE_AGENT_")) or key in ("CLAUDECODE", "CLAUDE_PID", "CLAUDE_EFFORT", "ANTHROPIC_BASE_URL"):
@@ -442,7 +506,7 @@ class Jobs:
     def stop(self, pid):
         self.stopped = True
         if pid == self.active and self.process:
-            os.killpg(self.process.pid, signal.SIGTERM)
+            kill_tree(self.process)
         elif pid in self.order:
             self.order.remove(pid)
             update(pid, stage="stopped")
@@ -468,8 +532,7 @@ class Jobs:
             return
         log(pid, "note", "Viendo y transcribiendo tus clips" if footage_lang(load(pid)) == "es" else "Watching and transcribing your clips")
         cmd = [sys.executable, str(SKILL / "scripts" / "survey.py"), "footage", "--out", "source", "--lang", footage_lang(load(pid))]
-        self.process = subprocess.Popen(cmd, cwd=d, env=clean_env(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                        text=True, start_new_session=True)
+        self.process = spawn(cmd, d, clean_env())
         tail = []
         for line in self.process.stdout:
             tail = (tail + [line.strip()])[-5:]
@@ -486,8 +549,7 @@ class Jobs:
             if self.stopped:
                 return self.finish(pid, None, 1, [], after)
         session = project.get("session")
-        cmd = [binary, "-p", prompt, "--output-format", "stream-json", "--verbose", "--permission-mode", "acceptEdits",
-               "--allowedTools", *TOOLS, "--disallowedTools", "Monitor", "ScheduleWakeup", "CronCreate"]
+        cmd = claude_command(project_dir(pid), ["--output-format", "stream-json", "--verbose"])
         cmd += ["--resume", session] if session else ["--session-id", (session := str(uuid.uuid4()))]
         brief = project.get("brief", {})
         for folder in (brief.get("sfx_folder"), brief.get("music_folder")):
@@ -495,8 +557,7 @@ class Jobs:
                 cmd += ["--add-dir", folder]
         update(pid, session=session, job_started=time.time())
         env = clean_env()
-        self.process = subprocess.Popen(cmd, cwd=project_dir(pid), env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                        text=True, start_new_session=True)
+        self.process = spawn(cmd, project_dir(pid), env, prompt)
         final, tail = None, []
         for line in self.process.stdout:
             tail = (tail + [line.strip()])[-5:]
@@ -627,7 +688,7 @@ def resume(pid):
 
 
 def health():
-    done = subprocess.run([sys.executable, str(SKILL / "scripts" / "doctor.py")], capture_output=True, text=True, timeout=60)
+    done = subprocess.run([sys.executable, str(SKILL / "scripts" / "doctor.py")], capture_output=True, timeout=60, **TEXT)
     lines = [x for x in done.stdout.splitlines() if x.startswith("MISS")]
     return {"claude": bool(claude_path()), "missing": lines, "api_key": bool(os.environ.get("ANTHROPIC_API_KEY")),
             "home": str(HOME)}

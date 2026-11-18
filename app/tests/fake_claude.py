@@ -7,7 +7,8 @@ import sys
 import time
 from pathlib import Path
 
-prompt = sys.argv[sys.argv.index("-p") + 1]
+sys.stdin.reconfigure(encoding="utf-8")
+prompt = sys.stdin.read()     # the app sends the prompt on stdin, as claude -p reads it
 mode = os.environ.get("FAKE_CLAUDE", "ok")
 say = lambda e: print(json.dumps(e), flush=True)
 say({"type": "system", "subtype": "init"})
