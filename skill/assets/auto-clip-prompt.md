@@ -10,6 +10,7 @@ Style preset: $style
 Length: $min_len to $max_len seconds, $format, $size, MP4 H.264 + AAC.
 Voiceover setting: $voiceover
 
+Run the skill's Python scripts with `$python` (for example `$python $skill/scripts/highlight.py ...`).
 Work only inside $work (your project folder) and write the deliverables to exactly:
 - video: $edit
 - copy:  $copy

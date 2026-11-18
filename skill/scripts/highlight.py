@@ -16,6 +16,9 @@ import subprocess
 import sys
 
 STEP = 0.5
+for stream in (sys.stdout, sys.stderr):     # Windows consoles default to a legacy code page
+    if stream:
+        stream.reconfigure(encoding="utf-8", errors="replace")
 
 
 def duration(video):

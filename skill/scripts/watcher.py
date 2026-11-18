@@ -35,6 +35,12 @@ import threading
 import time
 from pathlib import Path
 
+WINDOWS = os.name == "nt"
+# Windows consoles default to a legacy code page; pythonw has no console at all (stdout is None).
+for stream in (sys.stdout, sys.stderr):
+    if stream:
+        stream.reconfigure(encoding="utf-8", errors="replace")
+
 HERE = Path(__file__).resolve().parent
 SKILL = HERE.parent
 FORMATS = {"9:16": "1080x1920", "16:9": "1920x1080", "1:1": "1080x1080"}
@@ -64,9 +70,26 @@ SKIP_NAMES = re.compile(r"(^~|^\.|\.tmp$|\.part$|\.partial$|\.crdownload$|\.down
 log = logging.getLogger("watcher")
 
 
+def read_json(path):
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def write_json(path, data):
+    with open(path, "w", encoding="utf-8") as fh:     # closed at once: Windows cannot move an open file
+        json.dump(data, fh, indent=1, ensure_ascii=False)
+
+
 # ---------------------------------------------------------------- config and metadata
+def python_command():
+    """How Claude should start Python in its shell. On Windows, python3 is often a Microsoft Store stub."""
+    if not WINDOWS:
+        return "python3"
+    return "py -3" if shutil.which("py") else "python"
+
+
 def load_config(path):
-    cfg = dict(DEFAULTS, **json.load(open(path, encoding="utf-8")))
+    cfg = dict(DEFAULTS, **read_json(path))
     for key in ("watch", "out", "brand"):
         if not cfg.get(key):
             sys.exit(f"{path}: \"{key}\" is required")
@@ -79,7 +102,7 @@ def sidecar(clip):
     for cand in (clip.with_name(clip.name + ".meta.json"), clip.with_suffix(".meta.json"), clip.with_suffix(".json")):
         if cand.exists():
             try:
-                return json.load(open(cand, encoding="utf-8"))
+                return read_json(cand)
             except ValueError as e:
                 log.warning("bad metadata %s: %s", cand, e)
                 return {"_error": str(e)}
@@ -115,7 +138,7 @@ class State:
 
     def __init__(self, path):
         self.path, self.lock = path, threading.Lock()
-        self.data = json.load(open(path, encoding="utf-8")) if path.exists() else {}
+        self.data = read_json(path) if path.exists() else {}
 
     def key(self, clip):
         st = clip.stat()
@@ -128,7 +151,7 @@ class State:
         with self.lock:
             self.data[self.key(clip)] = value
             tmp = self.path.with_suffix(".tmp")
-            json.dump(self.data, open(tmp, "w", encoding="utf-8"), indent=1)
+            write_json(tmp, self.data)
             os.replace(tmp, self.path)
 
 
@@ -231,7 +254,7 @@ class Watcher:
         if not raw.exists():
             shutil.copy2(clip, raw)
         meta["raw"] = str(raw)
-        json.dump(meta, open(raw.with_suffix(".json"), "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+        write_json(raw.with_suffix(".json"), meta)
 
         work = self.out / "work" / cid
         work.mkdir(parents=True, exist_ok=True)
@@ -251,7 +274,7 @@ class Watcher:
         result = {"status": "failed", "flags": ["NO-RESULT"], "notes": f"claude exited with {code} and wrote no result.json"}
         if result_path.exists():
             try:
-                result = json.load(open(result_path, encoding="utf-8"))
+                result = read_json(result_path)
             except ValueError as e:
                 result["notes"] = f"result.json is not valid JSON: {e}"
         if result.get("status") == "ready" and not edit.exists():
@@ -271,24 +294,32 @@ class Watcher:
             rules.append(Path(self.cfg["rules_file"]).read_text(encoding="utf-8"))
         voice = self.cfg["voiceover"] if meta["voiceover"] is None else ("always" if meta["voiceover"] else "never")
         tpl = string.Template((SKILL / "assets" / "auto-clip-prompt.md").read_text(encoding="utf-8"))
+        # Forward slashes work in Python, ffmpeg and the Git Bash that Claude Code uses on Windows.
+        posix = lambda p: Path(p).as_posix()
         return tpl.safe_substitute(
-            skill=SKILL, clip=raw, id=cid, meta=json.dumps(meta, ensure_ascii=False), brand=self.cfg["brand"],
+            skill=posix(SKILL), clip=posix(raw), id=cid, meta=json.dumps(meta, ensure_ascii=False), brand=posix(self.cfg["brand"]),
             style=self.cfg["style"], min_len=self.cfg["min_len"], max_len=self.cfg["max_len"],
             format=self.cfg["format"], size=FORMATS[self.cfg["format"]], voiceover=voice, lang=self.cfg["lang"],
-            work=work, edit=edit, copy=copy, rules="\n".join(f"- {r}" for r in rules))
+            python=python_command(), work=posix(work), edit=posix(edit), copy=posix(copy), rules="\n".join(f"- {r}" for r in rules))
 
     def run_claude(self, prompt, work):
         exe = shutil.which(self.cfg["claude"]) or self.cfg["claude"]
-        cmd = [exe, "-p", "--output-format", "json", "--permission-mode", "acceptEdits",
-               "--add-dir", str(SKILL), str(self.out), "--allowedTools", *ALLOWED_TOOLS, *self.cfg["claude_args"]]
+        # The allowlist goes in a settings file: on Windows, claude.cmd passes its arguments through cmd.exe,
+        # where the parentheses and * of "Bash(python:*)" are special characters.
+        settings = work / "claude-settings.json"
+        settings.write_text(json.dumps({"permissions": {"allow": ALLOWED_TOOLS}}, indent=1), encoding="utf-8")
+        cmd = [exe, "-p", "--output-format", "json", "--permission-mode", "acceptEdits", "--settings", str(settings),
+               "--add-dir", str(SKILL), str(self.out), *self.cfg["claude_args"]]
         if exe.lower().endswith(".py"):
             cmd = [sys.executable] + cmd
         out_log = work / "claude.log"
         try:
             with open(out_log, "w", encoding="utf-8") as fh:
                 # The prompt goes through stdin: Windows .cmd shims cut long command lines.
+                # CREATE_NO_WINDOW: under pythonw, every ffmpeg and node that Claude starts would flash a console.
                 proc = subprocess.run(cmd, input=prompt, text=True, encoding="utf-8", stdout=fh, stderr=subprocess.STDOUT,
-                                      cwd=work, timeout=self.cfg["timeout_minutes"] * 60)
+                                      cwd=work, timeout=self.cfg["timeout_minutes"] * 60,
+                                      creationflags=subprocess.CREATE_NO_WINDOW if WINDOWS else 0)
             return proc.returncode
         except subprocess.TimeoutExpired:
             log.error("claude timed out after %s min", self.cfg["timeout_minutes"])

@@ -307,7 +307,7 @@ THREE_VERSION = "0.186.0"
 THREE_CDN = f"https://cdn.jsdelivr.net/npm/three@{THREE_VERSION}"
 scene_hosts, scene_files = [], {}
 for i, sc in enumerate(spec.get("scenes", [])):
-    sid, src = f"scene3d-{i}", sc["src"]
+    sid, src = f"scene3d-{i}", sc["src"].replace("\\", "/")     # a browser import needs forward slashes
     if not src.endswith(".js"):     # a ready-made scene from the skill
         builtin = os.path.join(HERE, "..", "assets", "scenes3d", src + ".js")
         if not os.path.exists(builtin):

@@ -33,7 +33,7 @@ result waits in `review/` for a human. Nothing is published.
 
 ## Configuration
 
-Copy `assets/watcher.example.json` and edit it. Use forward slashes in Windows paths, or doubled backslashes.
+Copy `assets/watcher.example.json` and edit it. It works the same on macOS and Windows. Use forward slashes in Windows paths, or doubled backslashes.
 
 | Key | Meaning |
 |---|---|
@@ -106,7 +106,42 @@ also needs everything `doctor.py` checks: Python 3, ffmpeg, Node and `eyes`.
 
 ### macOS
 
-Use a LaunchAgent with `RunAtLoad` set to `true`, or run it in a terminal with `caffeinate -i`.
+- Install the tools with Homebrew (`brew install python ffmpeg node`), plus `eyes` and Claude Code, then run
+  `python3 <skill>/scripts/doctor.py`.
+- With OneDrive or Dropbox on the Mac, turn on "Always keep on this device" for the folder, as on Windows.
+- To start it at login, save this as `~/Library/LaunchAgents/com.clips.watcher.plist`, with your paths.
+  launchd starts programs with an almost empty `PATH`, so list every folder that holds `claude`, `node`,
+  `ffmpeg` and `eyes` (`which claude ffmpeg node eyes` prints them):
+
+  ```xml
+  <?xml version="1.0" encoding="UTF-8"?>
+  <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+  <plist version="1.0">
+  <dict>
+    <key>Label</key><string>com.clips.watcher</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/opt/homebrew/bin/python3</string>
+      <string>/Users/YOU/.claude/skills/brand-video-studio/scripts/watcher.py</string>
+      <string>--config</string>
+      <string>/Users/YOU/clips-page/watcher.json</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/Users/YOU/.local/bin</string>
+    </dict>
+    <key>RunAtLoad</key><true/>
+    <key>KeepAlive</key><true/>
+    <key>StandardErrorPath</key><string>/Users/YOU/clips-page/logs/launchd.err</string>
+  </dict>
+  </plist>
+  ```
+
+  Load it with `launchctl load ~/Library/LaunchAgents/com.clips.watcher.plist` and stop it with
+  `launchctl unload` on the same file. If Claude Code was installed with npm under nvm, add that Node's
+  `bin` folder to `PATH` too, or set `"claude"` in the config to its full path.
+- A Mac that sleeps does not watch. Keep it awake while plugged in (System Settings, Battery or Energy), or run
+  the watcher in a terminal with `caffeinate -i python3 .../watcher.py --config watcher.json`.
 
 ## TODO: scheduling with Buffer
 

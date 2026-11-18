@@ -24,7 +24,8 @@ npx skills add cloudai-x/threejs-skills
 ```
 
 - **`t`, `d`:** start and length in seconds of the assembled video.
-- **`src`:** a ready-made scene, or a `.js` file of your own relative to the video folder.
+- **`src`:** a ready-made scene, or a `.js` file of your own relative to the video folder. Write paths
+  with forward slashes, on Windows too, since the browser loads them as URLs (`model`'s `params.src` as well).
 - **`mode`:** `full` (default) draws an opaque scene that covers the footage. `overlay` draws on a
   transparent background over the footage.
 - **`params`:** passed to the scene.
