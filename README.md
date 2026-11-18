@@ -34,6 +34,7 @@ It works in any language and outputs 9:16, 16:9 or 1:1.
 | `tech-glitch` | Grid, stepped motion | Software, AI, gaming |
 | `cinematic-minimal` | Full-bleed, long fades | Documentary, real estate, weddings |
 | `scrapbook` | Tilted, paper, warm | Family, DIY, recipes |
+| `gaming` | Huge centered hook, high contrast | Gameplay clips, highlights |
 
 ![The same short video rendered in all six animation styles, side by side.](docs/styles.gif)
 
@@ -129,6 +130,17 @@ python3 app/server.py
 ```
 
 See [the app's README](app/README.md) for what it does, how it works and what it costs.
+
+## Edit new clips automatically
+
+Point the watcher at a folder, such as console captures synced by OneDrive, and every new clip is edited by Claude Code in headless mode: the best moment picked by watching it (no voice needed), a 9:16 render, and captions for X, Instagram and TikTok. Everything waits in `review/` for you. Nothing is published.
+
+```bash
+cp skill/assets/watcher.example.json watcher.json    # set watch, out, brand and lang
+python3 skill/scripts/watcher.py --config watcher.json
+```
+
+See [`skill/references/auto-clips.md`](skill/references/auto-clips.md) for the content rules, creator permissions and starting it with Windows.
 
 ## Make it yours
 

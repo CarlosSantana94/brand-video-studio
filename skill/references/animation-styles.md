@@ -14,6 +14,7 @@ Set one in `brand.json` as `"style"`, or per video in `spec.json`. Each is defin
 | `tech-glitch` | Grid background, tight corners | Stepped, frame-snapped moves | Tight, active word in color | Software, AI, gaming, tutorials |
 | `cinematic-minimal` | Full-bleed video, spaced uppercase titles | Long sine fades | Small, no highlight | Documentary, real estate, weddings, nature, b-roll |
 | `scrapbook` | Dotted paper, tilted title | Playful spins and overshoot | Active word in a box | Family, DIY, recipes, warm brands |
+| `gaming` | Full-bleed footage, huge uppercase hook centered in the safe area, frame darkened behind it | Slams, fast cuts | Uppercase, active word in a box | Gameplay clips, highlights, esports, game news pages |
 
 ## Building your own
 
@@ -29,6 +30,8 @@ Copy a preset in `assets/styles.json` and change these parts. Keep the combinati
 | `exit` | `to` state, `ease`, `dur`. Keep exits faster than entrances |
 | `caption` | `mode` (`color`, `box`, `none`), `size`, `stroke`, `shadow`, `pop`, `case` |
 | `camera_ease` | Easing for moves of the video frame |
+| `hook_top`, `hook_size` | Vertical position and size of the hook in vertical videos. Defaults 300 and 116 |
+| `scrim` | `top` (gradient from the top) or `full` (darkens the whole frame under the hook) |
 
 ## Motion vocabulary
 

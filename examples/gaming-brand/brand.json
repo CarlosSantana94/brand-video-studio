@@ -1,0 +1,18 @@
+{
+  "name": "Neon Drive",
+  "handle": "@neondrive",
+  "cta": "Follow for daily clips",
+  "style": "gaming",
+  "colors": {
+    "ink": "#E4007C",
+    "ink_dark": "#12041F",
+    "bg": "#1A0A2E",
+    "light": "#FFF4E8",
+    "accent": "#22D3EE",
+    "highlight": "#FFC23D"
+  },
+  "fonts": {
+    "display": { "family": "Shrikhand", "file": "Shrikhand-Regular.ttf" },
+    "body": { "family": "Fredoka", "file": "Fredoka.ttf", "weights": "300 700" }
+  }
+}

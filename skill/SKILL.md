@@ -29,6 +29,8 @@ It needs Python 3, ffmpeg, Node (for `npx hyperframes`) and `eyes`. Installing `
 | X reels from one long video | Brand guide if missing, then `references/reels-from-long-video.md` |
 | Several clips joined into one video, or reels from many videos | Brand guide if missing, then `references/multiple-videos.md` |
 | A raw video made more watchable | Brand guide if missing, then `references/edit-raw-video.md` |
+| Gameplay, sports, b-roll or any clip where nobody talks | Brand guide if missing, then `references/clips-without-voice.md` |
+| New clips in a folder edited automatically (console captures, OneDrive, Dropbox) | `references/auto-clips.md` |
 | To pick or compare a look | `references/animation-styles.md` |
 
 Keep each client or channel in its own folder:
@@ -50,7 +52,7 @@ Reuse a `brand.json` if the project has one. Otherwise read `references/brand-gu
 
 ## Watch before you decide
 
-Never plan from the transcript alone. A strong line over a dark shot is a weak reel, and a quiet stretch may hold the best footage.
+Never plan from the transcript alone. When the transcript is empty or is not the creator talking, do not use `autocut.py` or word-timed captions: pick the moment visually with `highlight.py` and `eyes`, as `references/clips-without-voice.md` explains. A strong line over a dark shot is a weak reel, and a quiet stretch may hold the best footage.
 
 ```bash
 python3 <skill>/scripts/transcribe.py source.mp4 source/words.json --lang en --glossary "Names, Terms"

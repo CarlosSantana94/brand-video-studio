@@ -37,7 +37,8 @@ Several videos replace `src` with `sources`, and each range names its source:
 ```
 
 - **`gain`:** decibels per source, to even out clips recorded at different volumes.
-- **`size`:** the picture size of the clip. By default, the size used the longest. Other clips are scaled and center-cropped to fill it, so a horizontal clip in a vertical video loses its sides.
+- **`fit`:** `"blur"` shows the whole picture over a blurred copy of itself instead of cropping, for wide footage in a vertical video. Works with one video or several; `size` defaults to `1080x1920`.
+- **`size`:** the picture size of the clip. Also works with a single `src`. By default, the size used the longest. Other clips are scaled and center-cropped to fill it, so a horizontal clip in a vertical video loses its sides.
 - **`fix` and `add`:** name the source when the word could be in more than one, as `word@id:second` and a fourth item.
 - Source ids match the files in `source/words/`, and a source with no sound stays silent. `make_video.py` takes that folder as `--words`.
 

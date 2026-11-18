@@ -1,0 +1,20 @@
+{
+  "watch": "C:/Users/YOU/OneDrive/Videos/Xbox Game DVR",
+  "out": "C:/Users/YOU/clips-page",
+  "brand": "C:/Users/YOU/clips-page/brand/brand.json",
+  "style": "gaming",
+  "lang": "es",
+  "format": "9:16",
+  "min_len": 7,
+  "max_len": 30,
+  "voiceover": "auto",
+  "extensions": [".mp4", ".mov", ".mkv"],
+  "stable_seconds": 20,
+  "poll_seconds": 5,
+  "timeout_minutes": 45,
+  "claude": "claude",
+  "claude_args": [],
+  "rules": [
+    "This page is a fan page. Never use the game's, studio's or publisher's logos, key art or fonts, and nothing that could pass for official."
+  ]
+}

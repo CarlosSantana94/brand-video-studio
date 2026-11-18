@@ -145,8 +145,8 @@ background = scene("background", f'        #root .d {{ position: absolute; }}\n 
 # ---------------------------------------------------------------- hook
 hook_html = None
 if hook:
-    size = hook.get("size", 116 if VERTICAL else 104)
-    top = HOOK_TOP if VERTICAL else 150
+    size = hook.get("size", S.get("hook_size", 116) if VERTICAL else 104)
+    top = S.get("hook_top", HOOK_TOP) if VERTICAL else 150
     pill_top = top + int(size * 1.02 * len(hook["lines"])) + 34
     title = S["title"]
     # The opening frame is the cover, so the title may not start invisible or oversized.
@@ -159,8 +159,11 @@ if hook:
     full = not CARD
     shadow = f"7px 7px 0 {C['accent']}" if HARD or S["shadow"] == "hard" else "none"
     title_color = "#FFFFFF" if full else C["ink"]
+    # "full" darkens the whole frame, for a title in the middle of busy footage such as gameplay.
+    scrim = (f"{C['ink_dark']}99" if S.get("scrim") == "full"
+             else f"linear-gradient({C['ink_dark']}cc, {C['ink_dark']}00 62%)")
     stroke = f"-webkit-text-stroke: 10px {C['ink_dark']}; paint-order: stroke fill;" if full else ""
-    styles = f"""        #root #scrim {{ position: absolute; inset: 0; background: linear-gradient({C['ink_dark']}cc, {C['ink_dark']}00 62%); opacity: {1 if full else 0}; }}
+    styles = f"""        #root #scrim {{ position: absolute; inset: 0; background: {scrim}; opacity: {1 if full else 0}; }}
         #root #tilt {{ position: absolute; left: 70px; right: 70px; top: {top}px; transform: rotate({title['tilt']}deg); }}
         #root #title {{ text-align: center; }}
         #root .hl {{ font-family: {DISPLAY}; font-size: {size}px; line-height: 1.02; color: {title_color}; {stroke} text-shadow: {shadow}; white-space: nowrap; }}
@@ -262,8 +265,16 @@ info = scene("info", f"""        #root .lay {{ position: absolute; left: 0; righ
              "\n".join("        " + m for m in mk), "\n".join("        " + j for j in js))
 
 # ---------------------------------------------------------------- closing
+def luminance(hex_color):
+    r, g, b = (int(hex_color.lstrip("#")[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
 closing_html = None
 if closing:
+    # Brands with a dark background (neon, gaming, night) need light text on the closing card.
+    DARK_BG = luminance(C["bg"]) < 0.35
+    NAME_C, CTA_C = (C["highlight"], C["light"]) if DARK_BG else (C["ink"], C["ink_dark"])
     logo = brand.get("logo")
     logo_tag = f'<img id="logo" src="assets/img/{os.path.basename(logo)}" alt="" />' if logo else ""
     letters = "".join(f'<span class="ch">{esc(c) if c != " " else "&nbsp;"}</span>' for c in brand.get("url") or brand["name"])
@@ -280,9 +291,9 @@ if closing:
     closing_html = scene("closing", f"""        #root #ground {{ position: absolute; inset: 0; background: {C['bg']}; }}
         #root #stack {{ position: absolute; left: 60px; right: 60px; top: {int(H * 0.27)}px; text-align: center; }}
         #root #logo {{ width: 300px; height: 300px; object-fit: contain; margin-bottom: 40px; }}
-        #root #name {{ font-family: {DISPLAY}; font-size: 96px; line-height: 1.1; color: {C['ink']}; white-space: nowrap; }}
+        #root #name {{ font-family: {DISPLAY}; font-size: 96px; line-height: 1.1; color: {NAME_C}; white-space: nowrap; }}
         #root .ch {{ display: inline-block; }}
-        #root #cta {{ margin-top: 30px; font-family: {BODY}; font-weight: 600; font-size: 52px; color: {C['ink_dark']}; }}
+        #root #cta {{ margin-top: 30px; font-family: {BODY}; font-weight: 600; font-size: 52px; color: {CTA_C}; }}
         #root #handle {{ margin-top: 44px; }}
         #root #handlep {{ display: inline-block; padding: 14px 40px; border-radius: 999px; background: {C['ink']}; color: {C['light']};
           font-family: {BODY}; font-weight: 700; font-size: 54px; }}""",

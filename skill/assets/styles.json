@@ -269,5 +269,53 @@
       "pop": 1.08
     },
     "camera_ease": "back.inOut(1.2)"
+  },
+  "gaming": {
+    "label": "Gaming",
+    "best_for": "gameplay clips, highlights, esports, game news pages",
+    "layout": "full",
+    "radius": 0,
+    "shadow": "hard",
+    "decor": "plain",
+    "transition": "cut",
+    "title": {
+      "case": "upper",
+      "tilt": 0,
+      "stagger": 0.04,
+      "from": {
+        "scale": 1.7,
+        "opacity": 0
+      },
+      "ease": "expo.out",
+      "dur": 0.28
+    },
+    "enter": {
+      "from": {
+        "x": -90,
+        "opacity": 0
+      },
+      "ease": "expo.out",
+      "dur": 0.3
+    },
+    "exit": {
+      "to": {
+        "x": 90,
+        "opacity": 0
+      },
+      "ease": "expo.in",
+      "dur": 0.14
+    },
+    "caption": {
+      "case": "upper",
+      "size": 96,
+      "mode": "box",
+      "stroke": 12,
+      "shadow": 0,
+      "pop": 1.06
+    },
+    "camera_ease": "expo.inOut",
+    "hook_top": 560,
+    "hook_size": 118,
+    "scrim": "full"
   }
 }
